@@ -1,5 +1,7 @@
 #include <iostream>
 #include <cstdlib>
+#include <map>
+#include <list>
 
 void editTcpConnectionSpeed(int speed) {
     std::string command = "reg add HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\WinHttp /v ConnectionSpeed /t REG_DWORD /d " + std::to_string(speed) + " /f";
@@ -111,7 +113,58 @@ void editLargeSendOffload(std::string lsoOption) {
     }
 }
 
+// Run though each registry edit and test each value
+bool autoTestValues(){
+    std::map<std::string, std::list<std::string>> RegistryEditDict = {
+    { "TCPWindowAutoTuning", {"Disabled", "Highly restricted", "Restricted", "Normal", "Experimental"}},
+    { "WindowsScalingHeuristics", {"Disabled","Enabled","Default"} },
+    { "CongestionControlProvider", {"Default","None","Ctcp","Dctcp","New reno","CUBIC"} },
+    { "Receive-sideScaling", {"Enabled", "Disabled"} },
+    { "SegmentCoalescing", {"Enabled", "Disabled"} },
+    { "ECNcapability", {"Default", "Enabled", "Disabled"} },
+    { "ChecksumOffloading", {"Enabled", "Disabled"} },
+    { "TCPChimneyOffload", {"Default","Enabled","Disabled","automatic"} },
+    { "LargeSendOffload ", {"Enabled", "Disabled"} },
+    };
+
+    //Speed test vars
+    int highSpeed = 0;
+    int currentSpeed = 0;
+    
+    //Loop each  
+    for (const auto& pair : RegistryEditDict) {
+        std::cout << "Key: " << pair.first << " Values: ";
+        for (const auto& value : pair.second) {
+            // Set registry value to value and run speed test
+            std::cout << value << " ";
+            if(pair.first == "TCPWindowAutoTuning"){
+
+                editTcpWindowAutoTuning(value);
+                //run speed test
+                
+                if(currentSpeed > highSpeed){
+                    highSpeed = currentSpeed;
+                }
+            }
+        }
+        std::cout << std::endl;
+    }
+
+    return true;
+}
+
+// Global vars
+
+
 int main() {
+
+    std::cout << "******************************\n";
+    std::cout << "****V0.1 C++ TCP optimizer****\n";
+    std::cout << "******************************\n\n";
+    
+    autoTestValues();
+
+
     // Example usage (RUN AT YOUR OWN RISK)
     // editTcpConnectionSpeed(100000); // Set connection speed to 100 Mbps
     // editTcpWindowAutoTuning("Experimental"); // Set TCP window auto tuning to Experimental
