@@ -113,6 +113,10 @@ void editLargeSendOffload(std::string lsoOption) {
     }
 }
 
+int speedTest(){
+    return speed;
+}
+
 // Run though each registry edit and test each value
 bool autoTestValues(){
     std::map<std::string, std::list<std::string>> RegistryEditDict = {
@@ -124,7 +128,7 @@ bool autoTestValues(){
     { "ECNcapability", {"Default", "Enabled", "Disabled"} },
     { "ChecksumOffloading", {"Enabled", "Disabled"} },
     { "TCPChimneyOffload", {"Default","Enabled","Disabled","automatic"} },
-    { "LargeSendOffload ", {"Enabled", "Disabled"} },
+    { "LargeSendOffload", {"Enabled", "Disabled"} },
     };
 
     //Speed test vars
@@ -133,13 +137,94 @@ bool autoTestValues(){
     
     //Loop each  
     for (const auto& pair : RegistryEditDict) {
-        std::cout << "Key: " << pair.first << " Values: ";
+        // std::cout << "Key: " << pair.first << " Values: ";
         for (const auto& value : pair.second) {
             // Set registry value to value and run speed test
-            std::cout << value << " ";
+            // std::cout << "Editing " << pair.first << " with " << value << "\n";
             if(pair.first == "TCPWindowAutoTuning"){
 
-                editTcpWindowAutoTuning(value);
+                //run speed test
+                
+                if(currentSpeed > highSpeed){
+                    //editTcpWindowAutoTuning(value);
+                    std::cout << "Running TCP-Window-Auto-Tuning with: " << value << "\n";
+                    highSpeed = currentSpeed;
+                }
+            }
+            if(pair.first == "WindowsScalingHeuristics"){
+
+                //editTcpWindowAutoTuning(value);
+                std::cout << "Running WindowsScalingHeuristics with: " << value << "\n";
+                //run speed test
+                
+                if(currentSpeed > highSpeed){
+                    highSpeed = currentSpeed;
+                }
+            }
+            if(pair.first == "CongestionControlProvider"){
+
+                //editTcpWindowAutoTuning(value);
+                std::cout << "Running CongestionControlProvider with: " << value << "\n";
+                //run speed test
+                
+                if(currentSpeed > highSpeed){
+                    highSpeed = currentSpeed;
+                }
+            }
+            if(pair.first == "Receive-sideScaling"){
+
+                //editTcpWindowAutoTuning(value);
+                std::cout << "Running Receive-sideScaling with: " << value << "\n";
+                //run speed test
+                
+                if(currentSpeed > highSpeed){
+                    highSpeed = currentSpeed;
+                }
+            }
+            if(pair.first == "SegmentCoalescing"){
+
+                //editTcpWindowAutoTuning(value);
+                std::cout << "Running SegmentCoalescing with: " << value << "\n";
+                //run speed test
+                
+                if(currentSpeed > highSpeed){
+                    highSpeed = currentSpeed;
+                }
+            }
+            if(pair.first == "ECNcapability"){
+
+                //editTcpWindowAutoTuning(value);
+                std::cout << "Running ECNcapability with: " << value << "\n";
+                //run speed test
+                
+                if(currentSpeed > highSpeed){
+                    highSpeed = currentSpeed;
+                }
+            }
+            if(pair.first == "ChecksumOffloading"){
+
+                //editTcpWindowAutoTuning(value);
+                std::cout << "Running ChecksumOffloading with: " << value << "\n";
+                //run speed test
+                
+                if(currentSpeed > highSpeed){
+                    highSpeed = currentSpeed;
+                }
+            }
+            if(pair.first == "TCPChimneyOffload"){
+
+                //editTcpWindowAutoTuning(value);
+                std::cout << "Running TCPChimneyOffload with: " << value << "\n";
+                //run speed test
+                
+                if(currentSpeed > highSpeed){
+                    highSpeed = currentSpeed;
+                }
+            }
+            if(pair.first == "LargeSendOffload"){
+
+                //editTcpWindowAutoTuning(value);
+                std::cout << "Running LargeSendOffload with: " << value << "\n";
                 //run speed test
                 
                 if(currentSpeed > highSpeed){
