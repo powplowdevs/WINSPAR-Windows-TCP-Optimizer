@@ -2,6 +2,51 @@
 #include <cstdlib>
 #include <map>
 #include <list>
+#include <Python.h>
+#include <iostream>
+
+int speedTest() {
+    //Initialize Python
+    Py_Initialize();
+
+    //Import the Python module
+    PyObject* pName = PyUnicode_DecodeFSDefault("speedtest");
+    PyObject* pModule = PyImport_Import(pName);
+    Py_XDECREF(pName);
+
+    if (pModule != nullptr) {
+        PyObject* pFunc = PyObject_GetAttrString(pModule, "speed_test");
+        if (pFunc != nullptr && PyCallable_Check(pFunc)) {
+            PyObject* pValue = PyObject_CallObject(pFunc, nullptr);
+
+            if (pValue != nullptr) {
+                //Extract the result Python
+                double result = PyFloat_AsDouble(pValue);
+
+                Py_XDECREF(pValue);
+                Py_XDECREF(pFunc);
+                Py_XDECREF(pModule);
+                Py_Finalize();
+
+                //Return speed
+                return static_cast<int>(result);
+            } else {
+                PyErr_Print();
+            }
+            Py_XDECREF(pFunc);
+        } else {
+            PyErr_Print();
+        }
+        Py_XDECREF(pModule);
+    } else {
+        PyErr_Print();
+    }
+
+    Py_Finalize();
+
+    //For errors
+    return -1;
+}
 
 void editTcpConnectionSpeed(int speed) {
     std::string command = "reg add HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\WinHttp /v ConnectionSpeed /t REG_DWORD /d " + std::to_string(speed) + " /f";
@@ -113,11 +158,7 @@ void editLargeSendOffload(std::string lsoOption) {
     }
 }
 
-int speedTest(){
-    return speed;
-}
-
-// Run though each registry edit and test each value
+//Run though each registry edit and test each value
 bool autoTestValues(){
     std::map<std::string, std::list<std::string>> RegistryEditDict = {
     { "TCPWindowAutoTuning", {"Disabled", "Highly restricted", "Restricted", "Normal", "Experimental"}},
@@ -142,18 +183,17 @@ bool autoTestValues(){
             // Set registry value to value and run speed test
             // std::cout << "Editing " << pair.first << " with " << value << "\n";
             if(pair.first == "TCPWindowAutoTuning"){
-
+                //SET VALUE
+                std::cout << "Running TCP-Window-Auto-Tuning with: " << value << "\n";
                 //run speed test
                 
                 if(currentSpeed > highSpeed){
-                    //editTcpWindowAutoTuning(value);
-                    std::cout << "Running TCP-Window-Auto-Tuning with: " << value << "\n";
                     highSpeed = currentSpeed;
                 }
             }
             if(pair.first == "WindowsScalingHeuristics"){
 
-                //editTcpWindowAutoTuning(value);
+                //SET VALUE
                 std::cout << "Running WindowsScalingHeuristics with: " << value << "\n";
                 //run speed test
                 
@@ -163,7 +203,7 @@ bool autoTestValues(){
             }
             if(pair.first == "CongestionControlProvider"){
 
-                //editTcpWindowAutoTuning(value);
+                //SET VALUE
                 std::cout << "Running CongestionControlProvider with: " << value << "\n";
                 //run speed test
                 
@@ -173,7 +213,7 @@ bool autoTestValues(){
             }
             if(pair.first == "Receive-sideScaling"){
 
-                //editTcpWindowAutoTuning(value);
+                //SET VALUE
                 std::cout << "Running Receive-sideScaling with: " << value << "\n";
                 //run speed test
                 
@@ -183,7 +223,7 @@ bool autoTestValues(){
             }
             if(pair.first == "SegmentCoalescing"){
 
-                //editTcpWindowAutoTuning(value);
+                //SET VALUE
                 std::cout << "Running SegmentCoalescing with: " << value << "\n";
                 //run speed test
                 
@@ -193,7 +233,7 @@ bool autoTestValues(){
             }
             if(pair.first == "ECNcapability"){
 
-                //editTcpWindowAutoTuning(value);
+                //SET VALUE
                 std::cout << "Running ECNcapability with: " << value << "\n";
                 //run speed test
                 
@@ -203,7 +243,7 @@ bool autoTestValues(){
             }
             if(pair.first == "ChecksumOffloading"){
 
-                //editTcpWindowAutoTuning(value);
+                //SET VALUE
                 std::cout << "Running ChecksumOffloading with: " << value << "\n";
                 //run speed test
                 
@@ -213,7 +253,7 @@ bool autoTestValues(){
             }
             if(pair.first == "TCPChimneyOffload"){
 
-                //editTcpWindowAutoTuning(value);
+                //SET VALUE
                 std::cout << "Running TCPChimneyOffload with: " << value << "\n";
                 //run speed test
                 
@@ -223,7 +263,7 @@ bool autoTestValues(){
             }
             if(pair.first == "LargeSendOffload"){
 
-                //editTcpWindowAutoTuning(value);
+                //SET VALUE
                 std::cout << "Running LargeSendOffload with: " << value << "\n";
                 //run speed test
                 
@@ -247,8 +287,10 @@ int main() {
     std::cout << "****V0.1 C++ TCP optimizer****\n";
     std::cout << "******************************\n\n";
     
-    autoTestValues();
+    int speedS = speedTest();
+    std::cout << speedS;
 
+    autoTestValues();
 
     // Example usage (RUN AT YOUR OWN RISK)
     // editTcpConnectionSpeed(100000); // Set connection speed to 100 Mbps
