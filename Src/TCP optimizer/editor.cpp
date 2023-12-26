@@ -2,50 +2,41 @@
 #include <cstdlib>
 #include <map>
 #include <list>
-#include <Python.h>
 #include <iostream>
+#include <string>
+#include <C:/Users/kalid.DESKTOP-TUS9USS/Documents/GitHub/Capstone-optimizer/Include/curl.h> // <- this needs to be fixed idk how to make it just the include file
 
-int speedTest() {
-    //Initialize Python
-    Py_Initialize();
 
-    //Import the Python module
-    PyObject* pName = PyUnicode_DecodeFSDefault("speedtest");
-    PyObject* pModule = PyImport_Import(pName);
-    Py_XDECREF(pName);
+double speedTest(const std::string& url) {
+    CURL* curl;
+    CURLcode res;
 
-    if (pModule != nullptr) {
-        PyObject* pFunc = PyObject_GetAttrString(pModule, "speed_test");
-        if (pFunc != nullptr && PyCallable_Check(pFunc)) {
-            PyObject* pValue = PyObject_CallObject(pFunc, nullptr);
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl = curl_easy_init();
 
-            if (pValue != nullptr) {
-                //Extract the result Python
-                double result = PyFloat_AsDouble(pValue);
+    if (curl) {
+        double speed;
+        std::string response_data;
 
-                Py_XDECREF(pValue);
-                Py_XDECREF(pFunc);
-                Py_XDECREF(pModule);
-                Py_Finalize();
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_data);
 
-                //Return speed
-                return static_cast<int>(result);
-            } else {
-                PyErr_Print();
-            }
-            Py_XDECREF(pFunc);
+        res = curl_easy_perform(curl); 
+
+        if (res != CURLE_OK) {
+            fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
         } else {
-            PyErr_Print();
+            curl_easy_getinfo(curl, CURLINFO_SPEED_DOWNLOAD_T, &speed);
+            std::cout << "Download Speed: " << speed / 1e6 << " Mbps" << std::endl;
         }
-        Py_XDECREF(pModule);
-    } else {
-        PyErr_Print();
+
+        curl_easy_cleanup(curl);
+        curl_global_cleanup();
+        return speed;
     }
 
-    Py_Finalize();
-
-    //For errors
-    return -1;
+    return -1.0; // Indicates an error
 }
 
 void editTcpConnectionSpeed(int speed) {
@@ -287,7 +278,7 @@ int main() {
     std::cout << "****V0.1 C++ TCP optimizer****\n";
     std::cout << "******************************\n\n";
     
-    int speedS = speedTest();
+    int speedS = speedTest("https://example.com");
     std::cout << speedS;
 
     autoTestValues();
