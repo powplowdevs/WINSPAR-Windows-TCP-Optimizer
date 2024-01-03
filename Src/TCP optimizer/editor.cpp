@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include <C:/Users/kalid.DESKTOP-TUS9USS/Documents/GitHub/Capstone-optimizer/Include/curl.h> // <- this needs to be fixed idk how to make it just the include file
+#include <Windows.h>
 
 
 double speedTest(const std::string& url) {
@@ -116,7 +117,7 @@ void editEcnCapability(std::string ecnOption) {
     }
 }
 
-void editChecksumOffloading(std::string checksumOption) {
+void editChecksumOffloading(std::string checksumOption) { //Uses PowerShell
     std::string command = "netsh interface tcp set global checksum=" + checksumOption;
     int result = std::system(command.c_str());
 
@@ -149,9 +150,45 @@ void editLargeSendOffload(std::string lsoOption) {
     }
 }
 
+String grabVaules(){
+    HKEY hKey;
+    LONG result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\YourRegistryPath", 0, KEY_READ, &hKey);
+
+    if (result == ERROR_SUCCESS) {
+        DWORD dataSize, dataType;
+        result = RegQueryValueEx(hKey, "YourValueName", 0, &dataType, NULL, &dataSize);
+
+        if (result == ERROR_SUCCESS && (dataType == REG_SZ || dataType == REG_DWORD)) {
+            BYTE* data = new BYTE[dataSize];
+            result = RegQueryValueEx(hKey, "YourValueName", 0, &dataType, data, &dataSize);
+
+            if (result == ERROR_SUCCESS) {
+                if (dataType == REG_SZ) {
+                    std::cout << "String Value: " << reinterpret_cast<const char*>(data) << std::endl;
+                } else if (dataType == REG_DWORD) {
+                    std::cout << "DWORD Value: " << *reinterpret_cast<DWORD*>(data) << std::endl;
+                }
+            }
+
+            delete[] data;
+        }
+
+        RegCloseKey(hKey);
+    }
+
+    return "";
+}
+
+bool manualTestVal(){
+
+
+
+
+}
+
 //Run though each registry edit and test each value
 bool autoTestValues(){
-    std::map<std::string, std::list<std::string>> RegistryEditDict = {
+    std::map<std::string, std::list<std::string>> RegistryEditDict = {  
     { "TCPWindowAutoTuning", {"Disabled", "Highly restricted", "Restricted", "Normal", "Experimental"}},
     { "WindowsScalingHeuristics", {"Disabled","Enabled","Default"} },
     { "CongestionControlProvider", {"Default","None","Ctcp","Dctcp","New reno","CUBIC"} },
@@ -165,7 +202,7 @@ bool autoTestValues(){
 
     //Speed test vars
     int highSpeed = 0;
-    int currentSpeed = 0;
+    std :: String bestSetting;
     
     //Loop each  
     for (const auto& pair : RegistryEditDict) {
@@ -177,9 +214,10 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running TCP-Window-Auto-Tuning with: " << value << "\n";
                 //run speed test
-                
-                if(currentSpeed > highSpeed){
-                    highSpeed = currentSpeed;
+                int speed = 0;
+                if(speed >= highSpeed){
+                    highSpeed = speed;
+                    bestSetting = value;
                 }
             }
             if(pair.first == "WindowsScalingHeuristics"){
@@ -187,9 +225,10 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running WindowsScalingHeuristics with: " << value << "\n";
                 //run speed test
-                
-                if(currentSpeed > highSpeed){
-                    highSpeed = currentSpeed;
+                int speed = 0;
+                if(speed >= highSpeed){
+                    highSpeed = speed;
+                    bestSetting = value;
                 }
             }
             if(pair.first == "CongestionControlProvider"){
@@ -197,9 +236,10 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running CongestionControlProvider with: " << value << "\n";
                 //run speed test
-                
-                if(currentSpeed > highSpeed){
-                    highSpeed = currentSpeed;
+                int speed = 0;
+               if(speed >= highSpeed){
+                    highSpeed = speed;
+                    bestSetting = value;
                 }
             }
             if(pair.first == "Receive-sideScaling"){
@@ -207,9 +247,10 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running Receive-sideScaling with: " << value << "\n";
                 //run speed test
-                
-                if(currentSpeed > highSpeed){
-                    highSpeed = currentSpeed;
+                int speed = 0;
+               if(speed >= highSpeed){
+                    highSpeed = speed;
+                    bestSetting = value;
                 }
             }
             if(pair.first == "SegmentCoalescing"){
@@ -217,9 +258,10 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running SegmentCoalescing with: " << value << "\n";
                 //run speed test
-                
-                if(currentSpeed > highSpeed){
-                    highSpeed = currentSpeed;
+                int speed = 0;
+                if(speed >= highSpeed){
+                    highSpeed = speed;
+                    bestSetting = value;
                 }
             }
             if(pair.first == "ECNcapability"){
@@ -227,9 +269,10 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running ECNcapability with: " << value << "\n";
                 //run speed test
-                
-                if(currentSpeed > highSpeed){
-                    highSpeed = currentSpeed;
+                int speed = 0;
+               if(speed >= highSpeed){
+                    highSpeed = speed;
+                    bestSetting = value;
                 }
             }
             if(pair.first == "ChecksumOffloading"){
@@ -237,9 +280,10 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running ChecksumOffloading with: " << value << "\n";
                 //run speed test
-                
-                if(currentSpeed > highSpeed){
-                    highSpeed = currentSpeed;
+                int speed = 0;
+               if(speed >= highSpeed){
+                    highSpeed = speed;
+                    bestSetting = value;
                 }
             }
             if(pair.first == "TCPChimneyOffload"){
@@ -247,9 +291,10 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running TCPChimneyOffload with: " << value << "\n";
                 //run speed test
-                
-                if(currentSpeed > highSpeed){
-                    highSpeed = currentSpeed;
+                int speed = 0;
+               if(speed >= highSpeed){
+                    highSpeed = speed;
+                    bestSetting = value;
                 }
             }
             if(pair.first == "LargeSendOffload"){
@@ -257,9 +302,10 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running LargeSendOffload with: " << value << "\n";
                 //run speed test
-                
-                if(currentSpeed > highSpeed){
-                    highSpeed = currentSpeed;
+                int speed = 0;
+                if(speed >= highSpeed){
+                    highSpeed = speed;
+                    bestSetting = value;
                 }
             }
         }
