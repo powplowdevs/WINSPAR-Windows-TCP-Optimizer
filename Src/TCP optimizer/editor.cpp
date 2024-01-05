@@ -4,41 +4,8 @@
 #include <list>
 #include <iostream>
 #include <string>
-#include <C:/Users/kalid.DESKTOP-TUS9USS/Documents/GitHub/Capstone-optimizer/Include/curl.h> // <- this needs to be fixed idk how to make it just the include file
 #include <Windows.h>
 
-
-double speedTest(const std::string& url) {
-    CURL* curl;
-    CURLcode res;
-
-    curl_global_init(CURL_GLOBAL_DEFAULT);
-    curl = curl_easy_init();
-
-    if (curl) {
-        double speed;
-        std::string response_data;
-
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_data);
-
-        res = curl_easy_perform(curl); 
-
-        if (res != CURLE_OK) {
-            fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-        } else {
-            curl_easy_getinfo(curl, CURLINFO_SPEED_DOWNLOAD_T, &speed);
-            std::cout << "Download Speed: " << speed / 1e6 << " Mbps" << std::endl;
-        }
-
-        curl_easy_cleanup(curl);
-        curl_global_cleanup();
-        return speed;
-    }
-
-    return -1.0; // Indicates an error
-}
 
 void editTcpConnectionSpeed(int speed) {
     std::string command = "reg add HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\WinHttp /v ConnectionSpeed /t REG_DWORD /d " + std::to_string(speed) + " /f";
@@ -150,41 +117,12 @@ void editLargeSendOffload(std::string lsoOption) {
     }
 }
 
-String grabVaules(){
-    HKEY hKey;
-    LONG result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\YourRegistryPath", 0, KEY_READ, &hKey);
-
-    if (result == ERROR_SUCCESS) {
-        DWORD dataSize, dataType;
-        result = RegQueryValueEx(hKey, "YourValueName", 0, &dataType, NULL, &dataSize);
-
-        if (result == ERROR_SUCCESS && (dataType == REG_SZ || dataType == REG_DWORD)) {
-            BYTE* data = new BYTE[dataSize];
-            result = RegQueryValueEx(hKey, "YourValueName", 0, &dataType, data, &dataSize);
-
-            if (result == ERROR_SUCCESS) {
-                if (dataType == REG_SZ) {
-                    std::cout << "String Value: " << reinterpret_cast<const char*>(data) << std::endl;
-                } else if (dataType == REG_DWORD) {
-                    std::cout << "DWORD Value: " << *reinterpret_cast<DWORD*>(data) << std::endl;
-                }
-            }
-
-            delete[] data;
-        }
-
-        RegCloseKey(hKey);
-    }
-
-    return "";
-}
-
-bool manualTestVal(){
+// bool manualTestVal(){
 
 
 
 
-}
+// }
 
 //Run though each registry edit and test each value
 bool autoTestValues(){
@@ -202,7 +140,7 @@ bool autoTestValues(){
 
     //Speed test vars
     int highSpeed = 0;
-    std :: String bestSetting;
+    std::string bestSetting;
     
     //Loop each  
     for (const auto& pair : RegistryEditDict) {
@@ -317,17 +255,44 @@ bool autoTestValues(){
 
 // Global vars
 
+int runCommand(const char* command) {
+    // Replace "your_cmd_command" with the actual CMD command you want to run
+    const char* cmd = command;
+
+    // Open a pipe to the command
+    FILE* pipe = _popen(cmd, "r");
+    if (!pipe) {
+        std::cerr << "Failed to open pipe for command: " << cmd << std::endl;
+        return 1;
+    }
+
+    // Read the command output
+    char buffer[128];
+    std::string result = "";
+    while (!feof(pipe)) {
+        if (fgets(buffer, 128, pipe) != nullptr)
+            result += buffer;
+    }
+
+    // Close the pipe
+    _pclose(pipe);
+
+    // Print the captured output
+    std::cout << "Command output:\n" << result << std::endl;
+
+    return 0;
+}
 
 int main() {
 
     std::cout << "******************************\n";
     std::cout << "****V0.1 C++ TCP optimizer****\n";
     std::cout << "******************************\n\n";
-    
-    int speedS = speedTest("https://example.com");
-    std::cout << speedS;
+    runCommand("netsh interface tcp show global");
+    // int speedS = speedTest("https://example.com");
+    // std::cout << speedS;
 
-    autoTestValues();
+    // autoTestValues();
 
     // Example usage (RUN AT YOUR OWN RISK)
     // editTcpConnectionSpeed(100000); // Set connection speed to 100 Mbps
