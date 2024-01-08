@@ -1,7 +1,7 @@
 {
     "files.associations": {
-        "iostream": "cpp",
         "algorithm": "cpp",
+        "array": "cpp",
         "atomic": "cpp",
         "bit": "cpp",
         "cctype": "cpp",
@@ -26,6 +26,7 @@
         "iomanip": "cpp",
         "ios": "cpp",
         "iosfwd": "cpp",
+        "iostream": "cpp",
         "istream": "cpp",
         "iterator": "cpp",
         "limits": "cpp",

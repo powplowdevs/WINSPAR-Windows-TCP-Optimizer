@@ -2,10 +2,51 @@
 #include <cstdlib>
 #include <map>
 #include <list>
-#include <iostream>
 #include <string>
-#include <Windows.h>
+#include <sstream>
+#include <cstdio>
 
+
+double speedTest() {
+    const char* cmd = "speedtest";
+
+    //Open the command for reading
+    FILE* pipe = popen(cmd, "r");
+    if (!pipe) {
+        std::cerr << "popen() failed!" << std::endl;
+        return 1;
+    }
+
+    //Buffer to store the command output
+    char buffer[128];
+    std::string result = "";
+
+    //Read the command output line by line
+    while (fgets(buffer, sizeof(buffer), pipe) != NULL) {
+        result += buffer;
+    }
+
+    //Close pipe
+    pclose(pipe);
+
+    std::istringstream outStream(result);
+    std::string line;
+
+    double downloadSpeed = 0.0;
+    double uploadSpeed = 0.0;
+
+    while (std::getline(outStream, line)) {
+        if (line.find("Download:") != std::string::npos) {
+            std::istringstream ss(line.substr(line.find(":") + 1));
+            ss >> downloadSpeed;
+        } else if (line.find("Upload:") != std::string::npos) {
+            std::istringstream ss(line.substr(line.find(":") + 1));
+            ss >> uploadSpeed;
+        }
+    }
+
+    return downloadSpeed+uploadSpeed;
+}
 
 void editTcpConnectionSpeed(int speed) {
     std::string command = "reg add HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\WinHttp /v ConnectionSpeed /t REG_DWORD /d " + std::to_string(speed) + " /f";
@@ -139,7 +180,7 @@ bool autoTestValues(){
     };
 
     //Speed test vars
-    int highSpeed = 0;
+    int highSpeed = speedTest();;
     std::string bestSetting;
     
     //Loop each  
@@ -152,7 +193,7 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running TCP-Window-Auto-Tuning with: " << value << "\n";
                 //run speed test
-                int speed = 0;
+                int speed = speedTest();
                 if(speed >= highSpeed){
                     highSpeed = speed;
                     bestSetting = value;
@@ -163,7 +204,7 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running WindowsScalingHeuristics with: " << value << "\n";
                 //run speed test
-                int speed = 0;
+                int speed = speedTest();
                 if(speed >= highSpeed){
                     highSpeed = speed;
                     bestSetting = value;
@@ -174,7 +215,7 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running CongestionControlProvider with: " << value << "\n";
                 //run speed test
-                int speed = 0;
+                int speed = speedTest();
                if(speed >= highSpeed){
                     highSpeed = speed;
                     bestSetting = value;
@@ -185,7 +226,7 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running Receive-sideScaling with: " << value << "\n";
                 //run speed test
-                int speed = 0;
+                int speed = speedTest();
                if(speed >= highSpeed){
                     highSpeed = speed;
                     bestSetting = value;
@@ -196,7 +237,7 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running SegmentCoalescing with: " << value << "\n";
                 //run speed test
-                int speed = 0;
+                int speed = speedTest();
                 if(speed >= highSpeed){
                     highSpeed = speed;
                     bestSetting = value;
@@ -207,7 +248,7 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running ECNcapability with: " << value << "\n";
                 //run speed test
-                int speed = 0;
+                int speed = speedTest();
                if(speed >= highSpeed){
                     highSpeed = speed;
                     bestSetting = value;
@@ -218,7 +259,7 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running ChecksumOffloading with: " << value << "\n";
                 //run speed test
-                int speed = 0;
+                int speed = speedTest();
                if(speed >= highSpeed){
                     highSpeed = speed;
                     bestSetting = value;
@@ -229,7 +270,7 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running TCPChimneyOffload with: " << value << "\n";
                 //run speed test
-                int speed = 0;
+                int speed = speedTest();
                if(speed >= highSpeed){
                     highSpeed = speed;
                     bestSetting = value;
@@ -240,7 +281,7 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running LargeSendOffload with: " << value << "\n";
                 //run speed test
-                int speed = 0;
+                int speed = speedTest();
                 if(speed >= highSpeed){
                     highSpeed = speed;
                     bestSetting = value;
@@ -288,9 +329,9 @@ int main() {
     std::cout << "******************************\n";
     std::cout << "****V0.1 C++ TCP optimizer****\n";
     std::cout << "******************************\n\n";
+    
     runCommand("netsh interface tcp show global");
-    // int speedS = speedTest("https://example.com");
-    // std::cout << speedS;
+    std::cout << speedTest();
 
     // autoTestValues();
 
