@@ -1,42 +1,56 @@
 #include <iostream>
+#include <cstdio>
 #include <cstdlib>
 #include <map>
 #include <list>
-#include <iostream>
 #include <string>
+#include <sstream>
 #include <C:/Users/kalid.DESKTOP-TUS9USS/Documents/GitHub/Capstone-optimizer/Include/curl.h> // <- this needs to be fixed idk how to make it just the include file
 
 
-double speedTest(const std::string& url) {
-    CURL* curl;
-    CURLcode res;
+double speedTest() {
+    const char* cmd = "speedtest";
 
-    curl_global_init(CURL_GLOBAL_DEFAULT);
-    curl = curl_easy_init();
-
-    if (curl) {
-        double speed;
-        std::string response_data;
-
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_data);
-
-        res = curl_easy_perform(curl); 
-
-        if (res != CURLE_OK) {
-            fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-        } else {
-            curl_easy_getinfo(curl, CURLINFO_SPEED_DOWNLOAD_T, &speed);
-            std::cout << "Download Speed: " << speed / 1e6 << " Mbps" << std::endl;
-        }
-
-        curl_easy_cleanup(curl);
-        curl_global_cleanup();
-        return speed;
+    //Open the command for reading
+    FILE* pipe = popen(cmd, "r");
+    if (!pipe) {
+        std::cerr << "popen() failed!" << std::endl;
+        return 1;
     }
 
-    return -1.0; // Indicates an error
+    //Buffer to store the command output
+    char buffer[128];
+    std::string result = "";
+
+    //Read the command output line by line
+    while (fgets(buffer, sizeof(buffer), pipe) != NULL) {
+        result += buffer;
+    }
+
+    //Close pipe
+    pclose(pipe);
+
+    std::istringstream outStream(result);
+    std::string line;
+
+    double downloadSpeed = 0.0;
+    double uploadSpeed = 0.0;
+
+    while (std::getline(outStream, line)) {
+        if (line.find("Download:") != std::string::npos) {
+            std::istringstream ss(line);
+            ss.ignore(256, ' ');
+            ss >> downloadSpeed;
+        } else if (line.find("Upload:") != std::string::npos) {
+            std::istringstream ss(line);
+            ss.ignore(256, ' '); 
+            ss >> uploadSpeed;
+            std::cout << line;
+        }
+    }
+
+    std::cout << downloadSpeed << uploadSpeed << std::endl;
+    return downloadSpeed+uploadSpeed;
 }
 
 void editTcpConnectionSpeed(int speed) {
@@ -269,7 +283,6 @@ bool autoTestValues(){
     return true;
 }
 
-// Global vars
 
 
 int main() {
@@ -278,10 +291,10 @@ int main() {
     std::cout << "****V0.1 C++ TCP optimizer****\n";
     std::cout << "******************************\n\n";
     
-    int speedS = speedTest("https://example.com");
+    int speedS = speedTest();
     std::cout << speedS;
 
-    autoTestValues();
+    // autoTestValues();
 
     // Example usage (RUN AT YOUR OWN RISK)
     // editTcpConnectionSpeed(100000); // Set connection speed to 100 Mbps
