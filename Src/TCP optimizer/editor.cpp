@@ -1,57 +1,11 @@
 #include <iostream>
-#include <cstdio>
 #include <cstdlib>
 #include <map>
 #include <list>
+#include <iostream>
 #include <string>
-#include <sstream>
-#include <C:/Users/kalid.DESKTOP-TUS9USS/Documents/GitHub/Capstone-optimizer/Include/curl.h> // <- this needs to be fixed idk how to make it just the include file
+#include <Windows.h>
 
-
-double speedTest() {
-    const char* cmd = "speedtest";
-
-    //Open the command for reading
-    FILE* pipe = popen(cmd, "r");
-    if (!pipe) {
-        std::cerr << "popen() failed!" << std::endl;
-        return 1;
-    }
-
-    //Buffer to store the command output
-    char buffer[128];
-    std::string result = "";
-
-    //Read the command output line by line
-    while (fgets(buffer, sizeof(buffer), pipe) != NULL) {
-        result += buffer;
-    }
-
-    //Close pipe
-    pclose(pipe);
-
-    std::istringstream outStream(result);
-    std::string line;
-
-    double downloadSpeed = 0.0;
-    double uploadSpeed = 0.0;
-
-    while (std::getline(outStream, line)) {
-        if (line.find("Download:") != std::string::npos) {
-            std::istringstream ss(line);
-            ss.ignore(256, ' ');
-            ss >> downloadSpeed;
-        } else if (line.find("Upload:") != std::string::npos) {
-            std::istringstream ss(line);
-            ss.ignore(256, ' '); 
-            ss >> uploadSpeed;
-            std::cout << line;
-        }
-    }
-
-    std::cout << downloadSpeed << uploadSpeed << std::endl;
-    return downloadSpeed+uploadSpeed;
-}
 
 void editTcpConnectionSpeed(int speed) {
     std::string command = "reg add HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\WinHttp /v ConnectionSpeed /t REG_DWORD /d " + std::to_string(speed) + " /f";
@@ -130,7 +84,7 @@ void editEcnCapability(std::string ecnOption) {
     }
 }
 
-void editChecksumOffloading(std::string checksumOption) {
+void editChecksumOffloading(std::string checksumOption) { //Uses PowerShell
     std::string command = "netsh interface tcp set global checksum=" + checksumOption;
     int result = std::system(command.c_str());
 
@@ -163,9 +117,16 @@ void editLargeSendOffload(std::string lsoOption) {
     }
 }
 
+// bool manualTestVal(){
+
+
+
+
+// }
+
 //Run though each registry edit and test each value
 bool autoTestValues(){
-    std::map<std::string, std::list<std::string>> RegistryEditDict = {
+    std::map<std::string, std::list<std::string>> RegistryEditDict = {  
     { "TCPWindowAutoTuning", {"Disabled", "Highly restricted", "Restricted", "Normal", "Experimental"}},
     { "WindowsScalingHeuristics", {"Disabled","Enabled","Default"} },
     { "CongestionControlProvider", {"Default","None","Ctcp","Dctcp","New reno","CUBIC"} },
@@ -179,7 +140,7 @@ bool autoTestValues(){
 
     //Speed test vars
     int highSpeed = 0;
-    int currentSpeed = 0;
+    std::string bestSetting;
     
     //Loop each  
     for (const auto& pair : RegistryEditDict) {
@@ -191,9 +152,10 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running TCP-Window-Auto-Tuning with: " << value << "\n";
                 //run speed test
-                
-                if(currentSpeed > highSpeed){
-                    highSpeed = currentSpeed;
+                int speed = 0;
+                if(speed >= highSpeed){
+                    highSpeed = speed;
+                    bestSetting = value;
                 }
             }
             if(pair.first == "WindowsScalingHeuristics"){
@@ -201,9 +163,10 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running WindowsScalingHeuristics with: " << value << "\n";
                 //run speed test
-                
-                if(currentSpeed > highSpeed){
-                    highSpeed = currentSpeed;
+                int speed = 0;
+                if(speed >= highSpeed){
+                    highSpeed = speed;
+                    bestSetting = value;
                 }
             }
             if(pair.first == "CongestionControlProvider"){
@@ -211,9 +174,10 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running CongestionControlProvider with: " << value << "\n";
                 //run speed test
-                
-                if(currentSpeed > highSpeed){
-                    highSpeed = currentSpeed;
+                int speed = 0;
+               if(speed >= highSpeed){
+                    highSpeed = speed;
+                    bestSetting = value;
                 }
             }
             if(pair.first == "Receive-sideScaling"){
@@ -221,9 +185,10 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running Receive-sideScaling with: " << value << "\n";
                 //run speed test
-                
-                if(currentSpeed > highSpeed){
-                    highSpeed = currentSpeed;
+                int speed = 0;
+               if(speed >= highSpeed){
+                    highSpeed = speed;
+                    bestSetting = value;
                 }
             }
             if(pair.first == "SegmentCoalescing"){
@@ -231,9 +196,10 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running SegmentCoalescing with: " << value << "\n";
                 //run speed test
-                
-                if(currentSpeed > highSpeed){
-                    highSpeed = currentSpeed;
+                int speed = 0;
+                if(speed >= highSpeed){
+                    highSpeed = speed;
+                    bestSetting = value;
                 }
             }
             if(pair.first == "ECNcapability"){
@@ -241,9 +207,10 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running ECNcapability with: " << value << "\n";
                 //run speed test
-                
-                if(currentSpeed > highSpeed){
-                    highSpeed = currentSpeed;
+                int speed = 0;
+               if(speed >= highSpeed){
+                    highSpeed = speed;
+                    bestSetting = value;
                 }
             }
             if(pair.first == "ChecksumOffloading"){
@@ -251,9 +218,10 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running ChecksumOffloading with: " << value << "\n";
                 //run speed test
-                
-                if(currentSpeed > highSpeed){
-                    highSpeed = currentSpeed;
+                int speed = 0;
+               if(speed >= highSpeed){
+                    highSpeed = speed;
+                    bestSetting = value;
                 }
             }
             if(pair.first == "TCPChimneyOffload"){
@@ -261,9 +229,10 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running TCPChimneyOffload with: " << value << "\n";
                 //run speed test
-                
-                if(currentSpeed > highSpeed){
-                    highSpeed = currentSpeed;
+                int speed = 0;
+               if(speed >= highSpeed){
+                    highSpeed = speed;
+                    bestSetting = value;
                 }
             }
             if(pair.first == "LargeSendOffload"){
@@ -271,9 +240,10 @@ bool autoTestValues(){
                 //SET VALUE
                 std::cout << "Running LargeSendOffload with: " << value << "\n";
                 //run speed test
-                
-                if(currentSpeed > highSpeed){
-                    highSpeed = currentSpeed;
+                int speed = 0;
+                if(speed >= highSpeed){
+                    highSpeed = speed;
+                    bestSetting = value;
                 }
             }
         }
@@ -283,16 +253,44 @@ bool autoTestValues(){
     return true;
 }
 
+// Global vars
 
+int runCommand(const char* command) {
+    // Replace "your_cmd_command" with the actual CMD command you want to run
+    const char* cmd = command;
+
+    // Open a pipe to the command
+    FILE* pipe = _popen(cmd, "r");
+    if (!pipe) {
+        std::cerr << "Failed to open pipe for command: " << cmd << std::endl;
+        return 1;
+    }
+
+    // Read the command output
+    char buffer[128];
+    std::string result = "";
+    while (!feof(pipe)) {
+        if (fgets(buffer, 128, pipe) != nullptr)
+            result += buffer;
+    }
+
+    // Close the pipe
+    _pclose(pipe);
+
+    // Print the captured output
+    std::cout << "Command output:\n" << result << std::endl;
+
+    return 0;
+}
 
 int main() {
 
     std::cout << "******************************\n";
     std::cout << "****V0.1 C++ TCP optimizer****\n";
     std::cout << "******************************\n\n";
-    
-    int speedS = speedTest();
-    std::cout << speedS;
+    runCommand("netsh interface tcp show global");
+    // int speedS = speedTest("https://example.com");
+    // std::cout << speedS;
 
     // autoTestValues();
 
