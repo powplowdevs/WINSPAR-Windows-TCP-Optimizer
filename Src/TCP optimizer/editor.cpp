@@ -10,7 +10,7 @@ class TcpOptimizer {
 public:
     // GLOBAL FUNC IMPLEMENTATION
     double speedTest();
-    int runCommand(const char* command);
+    std::string runCommand(const char* command);
 
     // REG EDIT FUNCTIONS
     void editTcpConnectionSpeed(int speed) {
@@ -268,7 +268,8 @@ public:
 
 // GLOBAL FUNC's
 double speedTest() {
-        //Open the command for reading
+        //Run command
+        std::cout << "Running SpeedTest... " << std::endl;
         FILE* pipe = popen("speedtest", "r");
         if (!pipe) {
             std::cerr << "popen() failed!" << std::endl;
@@ -284,7 +285,6 @@ double speedTest() {
             result += buffer;
         }
 
-        //Close pipe
         pclose(pipe);
 
         std::istringstream outStream(result);
@@ -303,18 +303,18 @@ double speedTest() {
             }
         }
 
+        std::cout << "SpeedTest done, Speed was: " << downloadSpeed+uploadSpeed << std::endl;
         return downloadSpeed+uploadSpeed;
     }
 
-int runCommand(const char* command) {
-    // Replace "your_cmd_command" with the actual CMD command you want to run
+std::string runCommand(const char* command) {
     const char* cmd = command;
 
     // Open a pipe to the command
     FILE* pipe = _popen(cmd, "r");
     if (!pipe) {
         std::cerr << "Failed to open pipe for command: " << cmd << std::endl;
-        return 1;
+        return "----COMMAND_FAIL----";
     }
 
     // Read the command output
@@ -325,13 +325,9 @@ int runCommand(const char* command) {
             result += buffer;
     }
 
-    // Close the pipe
     _pclose(pipe);
 
-    // Print the captured output
-    std::cout << "Command output:\n" << result << std::endl;
-
-    return 0;
+    return result;
 }
 
 // MAIN
@@ -344,7 +340,7 @@ int main() {
     std::cout << "******************************\n\n";
     
     runCommand("netsh interface tcp show global");
-    std::cout << speedTest();
+    std::cout << speedTest() << std::endl;
 
     // autoTestValues();
 
