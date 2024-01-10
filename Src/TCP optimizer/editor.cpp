@@ -5,6 +5,7 @@
 #include <string>
 #include <sstream>
 #include <cstdio>
+#include <vector>
 
 class TcpOptimizer {
 public:
@@ -229,10 +230,34 @@ public:
         return true;
     }
 
-    // TO THIS METHOD*************************************************************************
-    bool manualTestVal(){
-        return false;
+    bool manualTestVal(const std::map<std::string, std::string>& userSettings) {
+        //apply settings
+        for (const auto& setting : userSettings) {
+            const std::string& param = setting.first;
+            const std::string& value = setting.second;
+
+            if (param == "TCPWindowAutoTuning") {
+                editTcpWindowAutoTuning(value);
+            } else if (param == "WindowsScalingHeuristics") {
+                editWindowsScalingHeuristics(value);
+            } else if (param == "CongestionControlProvider") {
+                editCongestionControlProvider(value);
+            } else if (param == "Receive-sideScaling") {
+                editReceiveSideScaling(value);
+            } else if (param == "SegmentCoalescing") {
+                editSegmentCoalescing(value);
+            } else if (param == "ECNcapability") {
+                editEcnCapability(value);
+            }
+
+            // Run speed test
+            double speed = speedTest();
+            std::cout << "Speed with " << param << " set to " << value << ": " << speed << std::endl;
+        }
+
+        return true;
     }
+
 
     //Run though each registry edit and test each value
     bool autoTestValues(){
@@ -390,9 +415,19 @@ int main() {
     // runCommand("netsh interface tcp show global");
     // std::cout << speedTest() << std::endl;
 
-    optimizer.resetTodefault();
+    // optimizer.resetTodefault();
     // std::cout << "done";
     // optimizer.autoTestValues();
+    std::map<std::string, std::string> userSettings = {
+        {"TCPWindowAutoTuning", "normal"},
+        {"WindowsScalingHeuristics", "enabled"},
+        {"CongestionControlProvider", "default"},
+        {"Receive-sideScaling", "enabled"},
+        {"SegmentCoalescing", "enabled"},
+        {"ECNcapability", "default"}
+    };
+
+    optimizer.manualTestVal(userSettings);
 
     // Example usage (RUN AT YOUR OWN RISK)
     // optimizer.editTcpConnectionSpeed(100000); // Set connection speed to 100 Mbps
