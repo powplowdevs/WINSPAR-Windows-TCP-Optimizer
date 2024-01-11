@@ -1,7 +1,6 @@
 {
     "files.associations": {
         "algorithm": "cpp",
-        "array": "cpp",
         "atomic": "cpp",
         "bit": "cpp",
         "cctype": "cpp",
@@ -34,16 +33,18 @@
         "locale": "cpp",
         "map": "cpp",
         "memory": "cpp",
+        "mutex": "cpp",
         "new": "cpp",
         "optional": "cpp",
         "ostream": "cpp",
         "ratio": "cpp",
-        "regex": "cpp",
         "sstream": "cpp",
         "stdexcept": "cpp",
+        "stop_token": "cpp",
         "streambuf": "cpp",
         "string": "cpp",
         "system_error": "cpp",
+        "thread": "cpp",
         "tuple": "cpp",
         "type_traits": "cpp",
         "typeinfo": "cpp",
@@ -62,9 +63,6 @@
         "xstring": "cpp",
         "xtr1common": "cpp",
         "xtree": "cpp",
-        "xutility": "cpp",
-        "mutex": "cpp",
-        "stop_token": "cpp",
-        "thread": "cpp"
+        "xutility": "cpp"
     }
 }
