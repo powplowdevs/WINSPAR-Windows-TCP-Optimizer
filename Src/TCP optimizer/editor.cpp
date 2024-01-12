@@ -5,17 +5,22 @@
 #include <string>
 #include <sstream>
 #include <cstdio>
-#include <vector>
+#include <chrono>
+#include <thread>
+#include <stdio.h>
+
 
 class TcpOptimizer {
 public:
     // GLOBAL FUNC IMPLEMENTATION
     double speedTest() {
         //Run command
-        std::cout << "Running SpeedTest... " << std::endl << std::flush;
-        FILE* pipe = popen("speedtest", "r");
+        std::cout << "Running SpeedTest... " << std::endl;
+        
+        FILE* pipe = popen("node server.js", "r");
         if (!pipe) {
-            std::cerr << "popen() failed!" << std::endl << std::flush;
+            std::cout << "popen() failed!" << std::endl;
+            
             return 1;
         }
 
@@ -46,18 +51,19 @@ public:
             }
         }
 
-        std::cout << "SpeedTest done, Speed was: " << downloadSpeed+uploadSpeed << std::endl << std::flush;
+        std::cout << "SpeedTest done, Speed was: " << downloadSpeed+uploadSpeed << std::endl;
+        
         return downloadSpeed+uploadSpeed;
     }
 
     std::string runCommand(const char* command) {
-
         const char* cmd = command;
 
         // Open a pipe to the command
         FILE* pipe = _popen(cmd, "r");
         if (!pipe) {
-            std::cerr << "Failed to open pipe for command: " << cmd << std::endl;
+            std::cout << "Failed to open pipe for command: " << cmd << std::endl;
+            
             return "----COMMAND_FAIL----";
         }
 
@@ -77,7 +83,7 @@ public:
     std::string grabCurrentTcpValues(){
         std::string globalVars = runCommand("netsh interface tcp show global");
         std::string wsh = runCommand("netsh int tcp show heuristics");
-        return globalVars + "\r\n" + wsh;
+        return globalVars + "" + wsh;
     }
 
     // REG EDIT FUNCTIONS
@@ -86,9 +92,10 @@ public:
         int result = std::system(command.c_str());
 
         if (result == 0) {
-            std::cout << "TCP connection speed edited successfully.\r\n"  << std::flush;
+            std::cout << "TCP connection speed edited successfully." << std::endl;
         } else {
-            std::cerr << "Error editing TCP connection speed.\r\n" << std::flush;
+            std::cout << "Error editing TCP connection speed." << std::endl;
+            
         }
     }
 
@@ -98,9 +105,9 @@ public:
         int result = std::system(command.c_str());
 
         if (result == 0) {
-            std::cout << "TCP window auto tuning edited successfully.\r\n"  << std::flush;
+            std::cout << "TCP window auto tuning edited successfully." << std::endl;
         } else {
-            std::cerr << "Error editing TCP window auto tuning.\r\n"  << std::flush;
+            std::cout << "Error editing TCP window auto tuning." << std::endl;
         }
     }
 
@@ -110,9 +117,9 @@ public:
         int result = std::system(command.c_str());
 
         if (result == 0) {
-            std::cout << "Windows scaling heuristics edited successfully.\r\n"  << std::flush;
+            std::cout << "Windows scaling heuristics edited successfully." << std::endl;
         } else {
-            std::cerr << "Error editing Windows scaling heuristics.\r\n"  << std::flush;
+            std::cout << "Error editing Windows scaling heuristics." << std::endl;
         }
     }
 
@@ -122,9 +129,9 @@ public:
         int result = std::system(command.c_str());
 
         if (result == 0) {
-            std::cout << "Congestion control provider edited successfully.\r\n"  << std::flush;
+            std::cout << "Congestion control provider edited successfully." << std::endl;
         } else {
-            std::cerr << "Error editing congestion control provider.\r\n"  << std::flush;
+            std::cout << "Error editing congestion control provider." << std::endl;
         }
     }
 
@@ -134,9 +141,9 @@ public:
         int result = std::system(command.c_str());
 
         if (result == 0) {
-            std::cout << "Receive-side scaling edited successfully.\r\n"  << std::flush;
+            std::cout << "Receive-side scaling edited successfully." << std::endl;
         } else {
-            std::cerr << "Error editing Receive-side scaling.\r\n"  << std::flush ;
+            std::cout << "Error editing Receive-side scaling."  << std::endl;
         }
     }
 
@@ -146,22 +153,23 @@ public:
         int result = std::system(command.c_str());
 
         if (result == 0) {
-            std::cout << "Segment coalescing edited successfully.\r\n"  << std::flush;
+            std::cout << "Segment coalescing edited successfully." << std::endl;
         } else {
-            std::cerr << "Error editing segment coalescing.\r\n"  << std::flush << std::flush;
+            std::cout << "Error editing segment coalescing." << std::endl;  
         }
     }
 
     void editEcnCapability(std::string ecnOption) { // Global var
 
         std::cout << ecnOption;
+        
         std::string command = "netsh interface tcp set global ecncapability=" + ecnOption;
         int result = std::system(command.c_str());
         
         if (result == 0) {
-            std::cout << "ECN capability edited successfully.\r\n"  << std::flush << std::flush;
+            std::cout << "ECN capability edited successfully." << std::endl;
         } else {
-            std::cerr << "Error editing ECN capability.\r\n"  << std::flush;
+            std::cout << "Error editing ECN capability." << std::endl;
         }
     }
 
@@ -170,9 +178,9 @@ public:
     //     int result = std::system(command.c_str());
 
     //     if (result == 0) {
-    //         std::cout << "Checksum offloading edited successfully.\r\n"  << std::flush;
+    //         std::cout << "Checksum offloading edited successfully." ;
     //     } else {
-    //         std::cerr << "Error editing checksum offloading.\r\n"  << std::flush;
+    //         std::cout << "Error editing checksum offloading." ;
     //     }
     // }
 
@@ -181,9 +189,9 @@ public:
     //     int result = std::system(command.c_str());
 
     //     if (result == 0) {
-    //         std::cout << "TCP chimney offload edited successfully.\r\n"  << std::flush;
+    //         std::cout << "TCP chimney offload edited successfully." ;
     //     } else {
-    //         std::cerr << "Error editing TCP chimney offload.\r\n"  << std::flush;
+    //         std::cout << "Error editing TCP chimney offload." ;
     //     }
     // }
 
@@ -192,9 +200,9 @@ public:
     //     int result = std::system(command.c_str());
 
     //     if (result == 0) {
-    //         std::cout << "Large Send Offload edited successfully.\r\n"  << std::flush;
+    //         std::cout << "Large Send Offload edited successfully." ;
     //     } else {
-    //         std::cerr << "Error editing Large Send Offload.\r\n"  << std::flush;
+    //         std::cout << "Error editing Large Send Offload." ;
     //     }
     // }
 
@@ -208,19 +216,26 @@ public:
     }
 
     bool resetTodefault(){
-    
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         editTcpWindowAutoTuning("normal");
-        std::cout << "1" << std::flush;
+        std::cout << "1" << std::endl;
+        
         editWindowsScalingHeuristics("default");
-        std::cout << "2" << std::flush;
+        std::cout << "2" << std::endl;
+        
         editCongestionControlProvider("default");
-        std::cout << "3" << std::flush;
+        std::cout << "3" << std::endl;
+        
         editReceiveSideScaling("enabled");
-        std::cout << "4" << std::flush;
+        std::cout << "4" << std::endl;
+        
         editSegmentCoalescing("enabled");
-        std::cout << "5" << std::flush;
+        std::cout << "5" << std::endl;
+        
         editEcnCapability("default");
-        std::cout << "6" << std::flush;
+        std::cout << "6" << std::endl;
+        
+        
         // editChecksumOffloading("enabled");
         // editTcpChimneyOffload("default");
         // std::cout << "7" << std::endl;
@@ -283,7 +298,8 @@ public:
             for (const auto& value : pair.second) {
                 if(pair.first == "TCPWindowAutoTuning"){
                     //SET VALUE
-                    std::cout << "Running TCP-Window-Auto-Tuning with: " << value << "\r\n"  << std::flush;
+                    std::cout << "Running TCP-Window-Auto-Tuning with: " << value << std::endl;
+                    
                     editTcpWindowAutoTuning(value);
                     //run speed test
                     int speed = speedTest();
@@ -295,7 +311,8 @@ public:
                 }
                 if(pair.first == "WindowsScalingHeuristics"){
                     //SET VALUE
-                    std::cout << "Running WindowsScalingHeuristics with: " << value << "\r\n"  << std::flush;
+                    std::cout << "Running WindowsScalingHeuristics with: " << value << std::endl;
+                    
                     editWindowsScalingHeuristics(value);
                     //run speed test
                     int speed = speedTest();
@@ -308,7 +325,8 @@ public:
                 if(pair.first == "CongestionControlProvider"){
 
                     //SET VALUE
-                    std::cout << "Running CongestionControlProvider with: " << value << "\r\n"  << std::flush;
+                    std::cout << "Running CongestionControlProvider with: " << value << std::endl;
+                    
                     editCongestionControlProvider(value);
                     //run speed test
                     int speed = speedTest();
@@ -321,7 +339,8 @@ public:
                 if(pair.first == "Receive-sideScaling"){
 
                     //SET VALUE
-                    std::cout << "Running Receive-sideScaling with: " << value << "\r\n"  << std::flush;
+                    std::cout << "Running Receive-sideScaling with: " << value << std::endl;
+                    
                     editReceiveSideScaling(value);
                     //run speed test
                     int speed = speedTest();
@@ -334,7 +353,8 @@ public:
                 if(pair.first == "SegmentCoalescing"){
 
                     //SET VALUE
-                    std::cout << "Running SegmentCoalescing with: " << value << "\r\n"  << std::flush;
+                    std::cout << "Running SegmentCoalescing with: " << value << std::endl;
+                    
                     editSegmentCoalescing(value);
                     //run speed test
                     int speed = speedTest();
@@ -347,7 +367,8 @@ public:
                 if(pair.first == "ECNcapability"){
 
                     //SET VALUE
-                    std::cout << "Running ECNcapability with: " << value << "\r\n"  << std::flush;
+                    std::cout << "Running ECNcapability with: " << value  << std::endl;
+                    
                     editEcnCapability(value);
                     //run speed test
                     int speed = speedTest();
@@ -360,7 +381,7 @@ public:
                 // if(pair.first == "ChecksumOffloading"){
 
                 //     //SET VALUE
-                //     std::cout << "Running ChecksumOffloading with: " << value << "\r\n"  << std::flush;
+                //     std::cout << "Running ChecksumOffloading with: " << value << std::endl;
                 //     //run speed test
                 //     int speed = speedTest();
                 // if(speed >= highSpeed){
@@ -371,7 +392,7 @@ public:
                 // if(pair.first == "TCPChimneyOffload"){
 
                 //     //SET VALUE
-                //     std::cout << "Running TCPChimneyOffload with: " << value << "\r\n"  << std::flush;
+                //     std::cout << "Running TCPChimneyOffload with: " << value << std::endl;
                 //     editTcpChimneyOffload(value);
                 //     //run speed test
                 //     int speed = speedTest();
@@ -383,7 +404,7 @@ public:
                 // if(pair.first == "LargeSendOffload"){
 
                 //     //SET VALUE
-                //     std::cout << "Running LargeSendOffload with: " << value << "\r\n"  << std::flush;
+                //     std::cout << "Running LargeSendOffload with: " << value << std::endl;
                 //     editLargeSendOffload(value);
                 //     //run speed test
                 //     int speed = speedTest();
@@ -408,26 +429,28 @@ int main() {
 
     TcpOptimizer optimizer;
 
-    std::cout << "******************************\r\n" << std::flush;
-    std::cout << "****V0.1 C++ TCP optimizer****\r\n" << std::flush;
-    std::cout << "******************************\r\n\r\n" << std::flush;
+    std::cout << "******************************" << std::endl;
+    std::cout << "****V0.1 C++ TCP optimizer****" << std::endl;
+    std::cout << "******************************" << std::endl;
     
+    std::cout << optimizer.speedTest();
+
     // runCommand("netsh interface tcp show global");
     // std::cout << speedTest() << std::endl;
 
-    // optimizer.resetTodefault();
+    //optimizer.resetTodefault();
     // std::cout << "done";
-    // optimizer.autoTestValues();
-    std::map<std::string, std::string> userSettings = {
-        {"TCPWindowAutoTuning", "normal"},
-        {"WindowsScalingHeuristics", "enabled"},
-        {"CongestionControlProvider", "default"},
-        {"Receive-sideScaling", "enabled"},
-        {"SegmentCoalescing", "enabled"},
-        {"ECNcapability", "default"}
-    };
+    //optimizer.autoTestValues();
+    // std::map<std::string, std::string> userSettings = {
+    //     {"TCPWindowAutoTuning", "normal"},
+    //     {"WindowsScalingHeuristics", "enabled"},
+    //     {"CongestionControlProvider", "default"},
+    //     {"Receive-sideScaling", "enabled"},
+    //     {"SegmentCoalescing", "enabled"},
+    //     {"ECNcapability", "default"}
+    // };
 
-    optimizer.manualTestVal(userSettings);
+    // optimizer.manualTestVal(userSettings);
 
     // Example usage (RUN AT YOUR OWN RISK)
     // optimizer.editTcpConnectionSpeed(100000); // Set connection speed to 100 Mbps
