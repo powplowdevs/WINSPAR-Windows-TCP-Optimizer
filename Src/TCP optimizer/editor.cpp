@@ -17,7 +17,7 @@ public:
         //Run command
         std::cout << "Running SpeedTest... " << std::endl;
         
-        FILE* pipe = popen("speedtest", "r");
+        FILE* pipe = popen("node server.js", "r");
         if (!pipe) {
             std::cout << "popen() failed!" << std::endl;
             
@@ -433,12 +433,14 @@ int main() {
     std::cout << "****V0.1 C++ TCP optimizer****" << std::endl;
     std::cout << "******************************" << std::endl;
     
+    std::cout << optimizer.speedTest();
+
     // runCommand("netsh interface tcp show global");
     // std::cout << speedTest() << std::endl;
 
-    optimizer.resetTodefault();
+    //optimizer.resetTodefault();
     // std::cout << "done";
-    // optimizer.autoTestValues();
+    //optimizer.autoTestValues();
     // std::map<std::string, std::string> userSettings = {
     //     {"TCPWindowAutoTuning", "normal"},
     //     {"WindowsScalingHeuristics", "enabled"},

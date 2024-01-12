@@ -1,0 +1,43 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connection Speed Test</title>
+</head>
+    <body>
+
+        <script>let imageAddr = "https://upload.wikimedia.org/wikipedia/commons/3/3a/Bloemen_van_adderwortel_%28Persicaria_bistorta%2C_synoniem%2C_Polygonum_bistorta%29_06-06-2021._%28d.j.b%29.jpg";
+        let downloadSize = 7300000; // bytes
+
+        function MeasureConnectionSpeed() {
+            let startTime, endTime;
+            let download = new Image();
+            download.onload = function () {
+                endTime = (new Date()).getTime();
+                showResults();
+            }
+
+            startTime = (new Date()).getTime();
+            let cacheBuster = "?nnn=" + startTime;
+            download.src = imageAddr + cacheBuster;
+
+            function showResults() {
+                let duration = (endTime - startTime) / 1000;
+                let bitsLoaded = downloadSize * 8;
+                let speedBps = (bitsLoaded / duration).toFixed(2);
+                let speedKbps = (speedBps / 1024).toFixed(2);
+                let speedMbps = (speedKbps / 1024).toFixed(2);
+                console.log("Speed in bps: " + speedBps);
+                console.log("Speed in Kbps: " + speedKbps);
+                console.log("Speed in Mbps: " + speedMbps);
+                process.stdout.write(`Speed in bps: ${speedBps}\n`);
+                process.stdout.write(`Speed in Kbps: ${speedKbps}\n`);
+                process.stdout.write(`Speed in Mbps: ${speedMbps}\n`);
+            }
+        }
+
+        MeasureConnectionSpeed();</script>
+
+    </body>
+</html>
