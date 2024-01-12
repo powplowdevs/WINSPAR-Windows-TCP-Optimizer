@@ -35,7 +35,7 @@ class Test {
                plafComponents.add(plafChooser);
             
             /*      final JCheckBox pack = new JCheckBox("Pack on PLAF change", true);
-            plafComponents.add(pack);*/
+            plafComponents.add(pack);*/  
             
                plafChooser.addActionListener( 
                   new ActionListener(){
@@ -58,14 +58,13 @@ class Test {
                gui.add(plafComponents, BorderLayout.NORTH);
             
                JPanel dynamicLabels = new JPanel(new BorderLayout(4,4));
-               dynamicLabels.setBorder(
-                  new TitledBorder("Main Menu") );
+               dynamicLabels.setBorder( new TitledBorder("Main Menu") );
                gui.add(dynamicLabels, BorderLayout.WEST);
-            
+               dynamicLabels.setLayout(new GridLayout(0, 1));
                JButton addNew = new JButton("TCP Optimizer");
                dynamicLabels.add( addNew, BorderLayout.NORTH );
                JButton addNew1 = new JButton("Storage Optimizer");
-               dynamicLabels.add( addNew1, BorderLayout.SOUTH );
+               dynamicLabels.add(addNew1);
             
                String[] header = {"NameofOption", "Options"};
                String[] a = new String[0];
