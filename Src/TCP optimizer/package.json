@@ -1,0 +1,23 @@
+{
+  "name": "tcp-optimizer",
+  "version": "1.0.0",
+  "description": "TCP-OPTIMIZER",
+  "main": "index.js",
+  "scripts": {
+    "test": "tcpOPTI"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powplowdevs/Capstone-optimizer.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/powplowdevs/Capstone-optimizer/issues"
+  },
+  "homepage": "https://github.com/powplowdevs/Capstone-optimizer#readme",
+  "dependencies": {
+    "canvas": "^2.11.2",
+    "express": "^4.18.2"
+  }
+}

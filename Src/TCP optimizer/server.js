@@ -1,15 +1,48 @@
-let http = require('http');
-let fs = require('fs');
+const express = require('express');
+const app = express();
+const port = 3000;
 
-const PORT=8080; 
+app.use(express.static('public'));
 
-fs.readFile('./SpeedTest.html', function (err, html) {
+app.get('/speed-test', (req, res) => {
+    const imageAddr = "ADD LINK HERE";
+    const downloadSize = 7300000;
 
-    if (err) throw err;    
+    function MeasureConnectionSpeed() {
+        return new Promise((resolve, reject) => {
+            let startTime, endTime;
+            let download = new Image();
+            download.onload = function () {
+                endTime = (new Date()).getTime();
+                resolve(showResults());
+            }
 
-    http.createServer(function(request, response) {  
-        response.writeHeader(200, {"Content-Type": "text/html"});  
-        response.write(html);  
-        response.end();  
-    }).listen(PORT);
+            startTime = (new Date()).getTime();
+            let cacheBuster = "?nnn=" + startTime;
+            download.src = imageAddr + cacheBuster;
+
+            function showResults() {
+                let duration = (endTime - startTime) / 1000;
+                let bitsLoaded = downloadSize * 8;
+                let speedBps = (bitsLoaded / duration).toFixed(2);
+                let speedKbps = (speedBps / 1024).toFixed(2);
+                let speedMbps = (speedKbps / 1024).toFixed(2);
+                let result = {
+                    speedBps: parseFloat(speedBps),
+                    speedKbps: parseFloat(speedKbps),
+                    speedMbps: parseFloat(speedMbps)
+                };
+
+                return result;
+            }
+        });
+    }
+
+    MeasureConnectionSpeed().then(speedData => {
+        res.json(speedData);
+    });
+});
+
+app.listen(port, () => {
+    console.log(`Server listening at http://localhost:${port}`);
 });
