@@ -17,7 +17,7 @@ public:
         //Run command
         std::cout << "Running SpeedTest... " << std::endl;
         
-        FILE* pipe = popen("node server.js", "r");
+        FILE* pipe = popen("python ./SpeedTest.py", "r");
         if (!pipe) {
             std::cout << "popen() failed!" << std::endl;
             
