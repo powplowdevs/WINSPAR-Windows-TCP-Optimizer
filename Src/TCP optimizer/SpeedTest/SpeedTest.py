@@ -23,10 +23,10 @@ def main():
     upload_data = b'0' * 100 * 1024 * 1024  #100MB 
 
     download_speed_result = download_speed(download_url)
-    upload_speed_result = upload_speed(upload_url, upload_data)
+    # upload_speed_result = upload_speed(upload_url, upload_data)
 
     print(f"Download Speed: {download_speed_result:.2f} Mbps")
-    print(f"Upload Speed: {upload_speed_result:.2f} Mbps")
+    # print(f"Upload Speed: {upload_speed_result:.2f} Mbps")
 
 if __name__ == "__main__":
     main()
