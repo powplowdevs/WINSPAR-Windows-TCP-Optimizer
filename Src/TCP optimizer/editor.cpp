@@ -1,4 +1,5 @@
 #include <iostream>
+#include <windows.h>
 #include <cstdlib>
 #include <map>
 #include <list>
@@ -17,7 +18,7 @@ public:
         //Run command
         std::cout << "Running SpeedTest... " << std::endl;
         
-        FILE* pipe = popen("python ./SpeedTest.py", "r");
+        FILE* pipe = popen("speedtest", "r");
         if (!pipe) {
             std::cout << "popen() failed!" << std::endl;
             
@@ -53,6 +54,8 @@ public:
 
         std::cout << "SpeedTest done, Speed was: " << downloadSpeed+uploadSpeed << std::endl;
         
+        Sleep(30);
+
         return downloadSpeed+uploadSpeed;
     }
 
@@ -433,14 +436,14 @@ int main() {
     std::cout << "****V0.1 C++ TCP optimizer****" << std::endl;
     std::cout << "******************************" << std::endl;
     
-    std::cout << optimizer.speedTest();
+    // std::cout << optimizer.speedTest();
 
     // runCommand("netsh interface tcp show global");
     // std::cout << speedTest() << std::endl;
 
     //optimizer.resetTodefault();
     // std::cout << "done";
-    //optimizer.autoTestValues();
+    optimizer.autoTestValues();
     // std::map<std::string, std::string> userSettings = {
     //     {"TCPWindowAutoTuning", "normal"},
     //     {"WindowsScalingHeuristics", "enabled"},
