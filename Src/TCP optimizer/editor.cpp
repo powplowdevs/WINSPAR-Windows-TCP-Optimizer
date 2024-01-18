@@ -309,8 +309,8 @@ public:
                     if(speed >= highSpeed){
                         highSpeed = speed;
                         bestSetting = value;
-                        editTcpWindowAutoTuning(bestSetting);
                     }
+                    editTcpWindowAutoTuning(bestSetting);
                 }
                 if(pair.first == "WindowsScalingHeuristics"){
                     //SET VALUE
@@ -322,8 +322,8 @@ public:
                     if(speed >= highSpeed){
                         highSpeed = speed;
                         bestSetting = value;
-                        editWindowsScalingHeuristics(bestSetting);
                     }
+                    editWindowsScalingHeuristics(bestSetting);
                 }
                 if(pair.first == "CongestionControlProvider"){
 
@@ -336,8 +336,8 @@ public:
                     if(speed >= highSpeed){
                         highSpeed = speed;
                         bestSetting = value;
-                        editCongestionControlProvider(bestSetting);
                     }
+                    editCongestionControlProvider(bestSetting);
                 }
                 if(pair.first == "Receive-sideScaling"){
 
@@ -350,8 +350,8 @@ public:
                     if(speed >= highSpeed){
                         highSpeed = speed;
                         bestSetting = value;
-                        editReceiveSideScaling(bestSetting);
                     }
+                    editReceiveSideScaling(bestSetting);
                 }
                 if(pair.first == "SegmentCoalescing"){
 
@@ -364,8 +364,8 @@ public:
                     if(speed >= highSpeed){
                         highSpeed = speed;
                         bestSetting = value;
-                        editSegmentCoalescing(bestSetting);
                     }
+                    editSegmentCoalescing(bestSetting);
                 }
                 if(pair.first == "ECNcapability"){
 
@@ -378,8 +378,8 @@ public:
                     if(speed >= highSpeed){
                         highSpeed = speed;
                         bestSetting = value;
-                        editEcnCapability(bestSetting);
                     }
+                    editEcnCapability(bestSetting);
                 }
                 // if(pair.first == "ChecksumOffloading"){
 
