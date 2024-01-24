@@ -1,5 +1,10 @@
-#include <iostream>
+﻿#include <iostream>
+#include <winsock2.h>
 #include <windows.h>
+#include <TlHelp32.h>
+#include <iphlpapi.h>
+#include <iostream>
+#pragma comment(lib, "IPHLPAPI.lib")
 #include <cstdlib>
 #include <map>
 #include <list>
@@ -9,6 +14,7 @@
 #include <chrono>
 #include <thread>
 #include <stdio.h>
+#include <set>
 
 
 class TcpOptimizer {
@@ -52,25 +58,21 @@ public:
             }
         }
 
-        std::cout << "SpeedTest done, Speed was: " << downloadSpeed+uploadSpeed << std::endl;
-        
-        Sleep(30);
+        std::cout << "SpeedTest done, Speed was: " << downloadSpeed + uploadSpeed << std::endl;
 
         return downloadSpeed+uploadSpeed;
     }
 
-    std::string runCommand(const char* command) {
-        const char* cmd = command;
 
-        // Open a pipe to the command
-        FILE* pipe = _popen(cmd, "r");
+    std::string runCommand(const std::string& command) {
+        // magic chatGPT code I will never understand ↓↓↓
+        FILE* pipe = _popen((command + " 2>&1").c_str(), "r");
+        // Code that makes more sense ↓↓↓
         if (!pipe) {
-            std::cout << "Failed to open pipe for command: " << cmd << std::endl;
-            
+            std::cout << "Failed to open pipe for command: " << command << std::endl;
             return "----COMMAND_FAIL----";
         }
 
-        // Read the command output
         char buffer[128];
         std::string result = "";
         while (!feof(pipe)) {
@@ -78,15 +80,82 @@ public:
                 result += buffer;
         }
 
-        _pclose(pipe);
+        int returnCode = _pclose(pipe);
+
+        if (returnCode != 0) {
+            std::cerr << "Command failed with return code: " << returnCode << std::endl;
+        }
 
         return result;
     }
 
-    std::string grabCurrentTcpValues(){
+    std::string grabCurrentTcpValues() {
         std::string globalVars = runCommand("netsh interface tcp show global");
         std::string wsh = runCommand("netsh int tcp show heuristics");
         return globalVars + "" + wsh;
+    }
+
+    void listRunningProcesses() {
+        PROCESSENTRY32 entry;
+        entry.dwSize = sizeof(PROCESSENTRY32);
+
+        HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+
+        std::set<std::string> uniqueProcesses; 
+
+        if (Process32First(snapshot, &entry)) {
+            do {
+                uniqueProcesses.insert(entry.szExeFile);
+            } while (Process32Next(snapshot, &entry));
+        }
+
+        CloseHandle(snapshot);
+
+        for (const auto& process : uniqueProcesses) {
+            std::cout << process << std::endl;
+        }
+    }
+    //Edit priority
+    //idle: 64 (or "idle")
+    //below normal : 16384 (or "below normal")
+    //normal : 32 (or "normal")
+    //above normal : 32768 (or "above normal")
+    //high priority : 128 (or "high priority")
+    //real time : 256 (or "realtime")
+    void setProcessPriority() {
+        while (true) {
+            std::cout << "--------------------------------\n";
+            listRunningProcesses();
+
+            std::string processName;
+            std::string priorityValue;
+            std::cout << "Enter the name of the process to set priority for or EXIT to start TCP optimaztion: ";
+            std::getline(std::cin, processName);
+            if (processName == "EXIT") {
+                break;
+            }
+
+
+            std::cout << "Enter the priority value (idle, below normal, normal, above normal, high priority, realtime): ";
+            std::getline(std::cin, priorityValue);
+
+            std::string command = "wmic process where name=\"" + processName + "\" CALL setpriority \"" + priorityValue + "\"";
+
+            std::string result = runCommand(command);
+            if (!(result.compare("Value map does not contain the input value for this property.") >= 0)) {
+                std::cout << "Priority command executed successfully." << std::endl;
+                std::cout << "Press Enter to continue...";
+                std::cin.ignore();
+                std::cout << "--------------------------------\n|                               |\n|                               |\n|                               |\n|                               |\n";
+            }
+            else {
+                std::cout << "Error executing priority command." << std::endl;
+                std::cout << "Hint: make sure you enter your value with from the list ie: normal" << std::endl;
+                std::cout << "Press Enter to continue...";
+                std::cin.ignore();
+                std::cout << "--------------------------------\n\n\n\n\n";
+            }
+        }
     }
 
     // REG EDIT FUNCTIONS
@@ -176,6 +245,7 @@ public:
         }
     }
 
+
     // void editChecksumOffloading(std::string checksumOption) { //Uses PowerShell
     //     std::string command = "netsh interface tcp set global checksum=" + checksumOption;
     //     int result = std::system(command.c_str());
@@ -198,16 +268,25 @@ public:
     //     }
     // }
 
-    // void editLargeSendOffload(std::string lsoOption) { // Not global var
-    //     std::string command = "netsh interface tcp set global lso=" + lsoOption;
-    //     int result = std::system(command.c_str());
 
-    //     if (result == 0) {
-    //         std::cout << "Large Send Offload edited successfully." ;
-    //     } else {
-    //         std::cout << "Error editing Large Send Offload." ;
-    //     }
-    // }
+    //void editLargeSendOffload(const std::string& lsoOption) {
+    //    // Construct the PowerShell command
+    //    std::string command = "powershell -Command \"";
+    //    command += "Get-NetAdapter | Where-Object { $_.Status -eq 'Up' } | ForEach-Object {";
+    //    command += "Set-NetAdapterAdvancedProperty -Name $_.Name -DisplayName 'Large Send Offload' -DisplayValue ";
+    //    command += (lsoOption == "enabled") ? "1" : "0";
+    //    command += "} \"";
+
+    //    // Execute the PowerShell command
+    //    int result = std::system(command.c_str());
+
+    //    if (result == 0) {
+    //        std::cout << "Set Large Send Offload to " << lsoOption << " for the active network adapter." << std::endl;
+    //    }
+    //    else {
+    //        std::cout << "Failed to set Large Send Offload to " << lsoOption << "." << std::endl;
+    //    }
+    //}
 
     // TO THIS METHOD*************************************************************************
     bool loadBackUp(){
@@ -219,7 +298,6 @@ public:
     }
 
     bool resetTodefault(){
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         editTcpWindowAutoTuning("normal");
         std::cout << "1" << std::endl;
         
@@ -279,6 +357,8 @@ public:
 
     //Run though each registry edit and test each value
     bool autoTestValues(){
+        //Set prioritys
+        setProcessPriority();
 
         std::map<std::string, std::list<std::string>> RegistryEditDict = {  
         { "TCPWindowAutoTuning", {"disabled", "highlyrestricted", "restricted", "normal", "experimental"}},
@@ -416,7 +496,9 @@ public:
                 //         bestSetting = value;
                 //     }
                 // }
+                std::cout << "---------------------------------------------------------------------------------------" << "\n\n";
             }
+            std::cout << "Best setting for " << pair.first << " is " << bestSetting << std::endl;
 
         }
 
@@ -436,6 +518,8 @@ int main() {
     std::cout << "****V0.1 C++ TCP optimizer****" << std::endl;
     std::cout << "******************************" << std::endl;
     
+    optimizer.autoTestValues();
+
     // std::cout << optimizer.speedTest();
 
     // runCommand("netsh interface tcp show global");
@@ -443,7 +527,7 @@ int main() {
 
     //optimizer.resetTodefault();
     // std::cout << "done";
-    optimizer.autoTestValues();
+    //optimizer.autoTestValues();
     // std::map<std::string, std::string> userSettings = {
     //     {"TCPWindowAutoTuning", "normal"},
     //     {"WindowsScalingHeuristics", "enabled"},
