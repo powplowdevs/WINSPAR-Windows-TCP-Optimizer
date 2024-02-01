@@ -8,7 +8,9 @@
 #include <algorithm>
 #include <iphlpapi.h>
 #include <iostream>
+#include <Pdh.h>
 #pragma comment(lib, "IPHLPAPI.lib")
+#pragma comment(lib, "Pdh.lib")
 #include <cstdlib>
 #include <map>
 #include <list>
@@ -20,11 +22,11 @@
 #include <stdio.h>
 #include <set>
 
+
 class TcpOptimizer {
 public:
     std::vector<std::string> qosNames;
 
-    // GLOBAL FUNC IMPLEMENTATION
     double speedTest() {
         //Run command
         std::cout << "Running SpeedTest... " << std::endl;
@@ -224,67 +226,23 @@ public:
         }
     }
 
-    //BandWidth limiter
-    void applyBandwidthLimit() {
-        //pick app
-        std::pair<std::string, std::string> selectedApp = ChooseApplication();
-        std::string appName = selectedApp.first;
-        appName = appName.substr(0, appName.find(' '));
-        std::string appPath = selectedApp.second;
-        appPath.erase(std::remove_if(appPath.begin(), appPath.end(), ::isspace), appPath.end());
-
-        int bandwidthLimit = 1; //EDIT LATER
-
-        //create QoS policy
-        std::string command = "powershell New-NetQosPolicy -Name " + appName + " -AppPathNameMatchCondition \"" + appName + "\" -ThrottleRateActionBitsPerSecond " + std::to_string(bandwidthLimit) + "MB -IPProtocolMatchCondition Both -NetworkProfile All";
-        std::cout << command << std::endl;
-        system(command.c_str());
-     
-        qosNames.push_back(appName);
-        std::cout << "Bandwidth limit applied for " << appName << ": " << bandwidthLimit << " Kbps" << std::endl;
-    }
-
-    void removeBandwidthLimit() {
-        //Display all QoS's
-        std::cout << "QoS Policies:" << std::endl;
-        for (size_t i = 0; i < qosNames.size(); ++i) {
-            std::cout << i + 1 << ". " << qosNames[i] << std::endl;
-        }
-
-        //Pick one
-        size_t choice;
-        std::cout << "Enter the number corresponding to the QoS you want to remove: ";
-        std::cin >> choice;
-
-        if (choice > 0 && choice <= qosNames.size()){
-            std::string qosNameToRemove = qosNames[choice - 1];
-            std::string command = "powershell Remove-NetQosPolicy -Name " + qosNameToRemove;
-            system(command.c_str());
-
-            qosNames.erase(qosNames.begin() + choice - 1);
-            std::cout << "Bandwidth limit removed for " << qosNameToRemove << std::endl;
-        }
-        else{
-            std::cerr << "Invalid choice." << std::endl;
-        }
-    }
-
     //Computer\reg add HKCU\Software\Policies\Microsoft\Windows\QoS
     //REG Computer\reg add HKCU\Software\Policies\Microsoft\Windows\QoS\QoS_NAME /v VALUE_NAME /t REG_DWORD /d 1
-    void createQoS(std::string QoS_Name, std::string ApplicationName, std::string path, std::string ThrottleRate) {
+    void createQoS(std::string QoS_Name, std::string path, std::string ThrottleRate) {
         std::list<std::string> commandList;
 
         commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v Version /t REG_SZ /d " + "1.0");
-        commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"" + ApplicationName + "\" /t REG_SZ /d " + path);
+        commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"Application Name\" /t REG_SZ /d " + path);
         commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v Protocol /t REG_SZ /d " + "*");
-        commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"local Port\" /t REG_SZ /d " + "*");
-        commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"local IP\" /t REG_SZ /d " + "*");
+        commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"Local Port\" /t REG_SZ /d " + "*");
+        commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"Local IP\" /t REG_SZ /d " + "*");
         commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"Local IP Prefix Length\" /t REG_SZ /d " + "*");
-        commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"Remote port\" /t REG_SZ /d " + "*");
+        commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"Remote Port\" /t REG_SZ /d " + "*");
         commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"Remote IP\" /t REG_SZ /d " + "*");
         commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"Remote IP Prefix Length\" /t REG_SZ /d " + "*");
         commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"DSCP Value\" /t REG_SZ /d " + "-1");
-        commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"Throttle Rate\" /t REG_SZ /d " + "5");
+        commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"Throttle Rate\" /t REG_SZ /d " + ThrottleRate);
+        commandList.push_back("gpupdate /force");
 
         for (const std::string& command : commandList) {
             std::cout << command << std::endl;
@@ -292,6 +250,39 @@ public:
         }
         
     }
+
+    void removeQoS(std::string QoS_Name) {
+        std::list<std::string> commandList;
+
+        commandList.push_back("reg delete HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /f");
+        commandList.push_back("gpupdate /force");
+
+        for (const std::string& command : commandList) {
+            std::cout << command << std::endl;
+            system(command.c_str());
+        }
+    }
+    
+    //If an app is using alot of bandwitdh and is not one of the apps to optimize and one of the apps to optimize is open than cap that apps bandwitdh
+    
+    void DisplayTopProcesses() {
+        PDH_HQUERY query;
+        PDH_HCOUNTER counter;
+        PdhOpenQuery(NULL, 0, &query);
+        PdhAddEnglishCounter(query, "\\Network Interface(*)\\Bytes Total/sec", 0, &counter);
+        PdhCollectQueryData(query);
+        a
+        while (true) {
+            PDH_FMT_COUNTERVALUE value;
+            PdhCollectQueryData(query);
+            PdhGetFormattedCounterValue(counter, PDH_FMT_LONG, NULL, &value);
+            std::cout << "Bytes Total/sec: " << value.longValue << std::endl;
+            Sleep(1000);  // Sleep for 1 second
+        }
+
+        PdhCloseQuery(query);
+    }
+
 
     // REG EDIT FUNCTIONS
     void editTcpConnectionSpeed(int speed) { 
@@ -653,7 +644,10 @@ int main() {
     std::cout << "****V0.1 C++ TCP optimizer****" << std::endl;
     std::cout << "******************************" << std::endl;
     
-    optimizer.createQoS("test", "firefox", "firefox.exe", "5");
+    optimizer.DisplayTopProcesses();
+
+    //optimizer.createQoS("test", "firefox.exe", "5");
+    //optimizer.removeQoS("test");
 
     //optimizer.applyBandwidthLimit();
 
