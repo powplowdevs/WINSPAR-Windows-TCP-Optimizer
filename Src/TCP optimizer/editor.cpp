@@ -7,12 +7,12 @@
 #include <TlHelp32.h>
 #include <algorithm>
 #include <iphlpapi.h>
+#include <psapi.h>
+#pragma comment(lib, "iphlpapi.lib")
 #include <iostream>
-#include <Pdh.h>
-#pragma comment(lib, "IPHLPAPI.lib")
-#pragma comment(lib, "Pdh.lib")
 #include <cstdlib>
 #include <map>
+#include <unordered_map>
 #include <list>
 #include <string>
 #include <sstream>
@@ -122,6 +122,7 @@ public:
             std::cout << process << std::endl;
         }
     }
+
     //Edit priority
     //idle: 64 (or "idle")
     //below normal : 16384 (or "below normal")
@@ -264,25 +265,63 @@ public:
     }
     
     //If an app is using alot of bandwitdh and is not one of the apps to optimize and one of the apps to optimize is open than cap that apps bandwitdh
-    
-    void DisplayTopProcesses() {
-        PDH_HQUERY query;
-        PDH_HCOUNTER counter;
-        PdhOpenQuery(NULL, 0, &query);
-        PdhAddEnglishCounter(query, "\\Network Interface(*)\\Bytes Total/sec", 0, &counter);
-        PdhCollectQueryData(query);
-        a
-        while (true) {
-            PDH_FMT_COUNTERVALUE value;
-            PdhCollectQueryData(query);
-            PdhGetFormattedCounterValue(counter, PDH_FMT_LONG, NULL, &value);
-            std::cout << "Bytes Total/sec: " << value.longValue << std::endl;
-            Sleep(1000);  // Sleep for 1 second
-        }
+    std::string FindAppNameByPID(DWORD pid) {
+        HANDLE processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
 
-        PdhCloseQuery(query);
+        if (processHandle == NULL) {
+            return "";
+        }
+        TCHAR filePath[MAX_PATH];
+        if (GetModuleFileNameEx(processHandle, NULL, filePath, MAX_PATH) == 0) {
+            CloseHandle(processHandle);
+            return "";
+        }
+        CloseHandle(processHandle);
+        return filePath;
     }
 
+
+    void GetBandwidthUsage() {
+        DWORD processes[1024];
+        DWORD bytesReturned;
+        std::unordered_map<int, SIZE_T> processMap;
+        std::list<std::string> top10Apps;
+
+        if (EnumProcesses(processes, sizeof(processes), &bytesReturned)) {
+            DWORD numProcesses = bytesReturned / sizeof(DWORD);
+
+            for (DWORD i = 0; i < numProcesses; ++i) {
+                HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processes[i]);
+                if (hProcess != NULL) {
+                    PROCESS_MEMORY_COUNTERS_EX pmc;
+                    if (GetProcessMemoryInfo(hProcess, (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc))) {
+                        processMap[static_cast<int>(processes[i])] = pmc.PrivateUsage;
+                    }
+                    else {
+                        std::cerr << "Failed to get process memory info for PID " << processes[i] << ". Error code: " << GetLastError() << std::endl;
+                    }
+
+                    CloseHandle(hProcess);
+                }
+                else {
+                    std::cerr << "Failed to open process with PID " << processes[i] << " Error code: " << GetLastError() << std::endl;
+                }
+            }
+        }
+        else {
+            std::cerr << "Failed to enumerate processes. Error code: " << GetLastError() << std::endl;
+        }
+
+        std::vector<std::pair<int, SIZE_T>> sortedProcessVector(processMap.begin(), processMap.end());
+
+        std::sort(sortedProcessVector.begin(), sortedProcessVector.end(), [](const auto& a, const auto& b) {
+            return a.second > b.second;
+            });
+
+        for (const auto& entry : sortedProcessVector) {
+            std::cout << "Process ID: " << entry.first << ", Network Usage: " << entry.second << " bytes" << std::endl;
+        }
+    }
 
     // REG EDIT FUNCTIONS
     void editTcpConnectionSpeed(int speed) { 
@@ -644,7 +683,8 @@ int main() {
     std::cout << "****V0.1 C++ TCP optimizer****" << std::endl;
     std::cout << "******************************" << std::endl;
     
-    optimizer.DisplayTopProcesses();
+    optimizer.GetBandwidthUsage();
+    
 
     //optimizer.createQoS("test", "firefox.exe", "5");
     //optimizer.removeQoS("test");
