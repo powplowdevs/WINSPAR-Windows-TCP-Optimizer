@@ -1,12 +1,18 @@
 ﻿#include <iostream>
 #include <winsock2.h>
 #include <windows.h>
+#include <stdlib.h>
+#include <psapi.h>
+#include <vector>
 #include <TlHelp32.h>
+#include <algorithm>
 #include <iphlpapi.h>
+#include <psapi.h>
+#pragma comment(lib, "iphlpapi.lib")
 #include <iostream>
-#pragma comment(lib, "IPHLPAPI.lib")
 #include <cstdlib>
 #include <map>
+#include <unordered_map>
 #include <list>
 #include <string>
 #include <sstream>
@@ -19,7 +25,8 @@
 
 class TcpOptimizer {
 public:
-    // GLOBAL FUNC IMPLEMENTATION
+    std::vector<std::string> qosNames;
+
     double speedTest() {
         //Run command
         std::cout << "Running SpeedTest... " << std::endl;
@@ -63,7 +70,6 @@ public:
         return downloadSpeed+uploadSpeed;
     }
 
-
     std::string runCommand(const std::string& command) {
         // magic chatGPT code I will never understand ↓↓↓
         FILE* pipe = _popen((command + " 2>&1").c_str(), "r");
@@ -95,6 +101,7 @@ public:
         return globalVars + "" + wsh;
     }
 
+    //Set priority stuff
     void listRunningProcesses() {
         PROCESSENTRY32 entry;
         entry.dwSize = sizeof(PROCESSENTRY32);
@@ -115,6 +122,7 @@ public:
             std::cout << process << std::endl;
         }
     }
+
     //Edit priority
     //idle: 64 (or "idle")
     //below normal : 16384 (or "below normal")
@@ -155,6 +163,163 @@ public:
                 std::cin.ignore();
                 std::cout << "--------------------------------\n\n\n\n\n";
             }
+        }
+    }
+
+    //Magic chatGPT fucntion that grabs path and names of running 
+    std::vector<std::pair<std::string, std::string>> GetRunningApplications() {
+        std::vector<std::pair<std::string, std::string>> runningApplications;
+
+        // Get the list of running processes
+        DWORD processes[1024], cbNeeded, cProcesses;
+        if (EnumProcesses(processes, sizeof(processes), &cbNeeded)) {
+            // Calculate how many process identifiers were returned
+            cProcesses = cbNeeded / sizeof(DWORD);
+
+            // Iterate through the list of processes
+            for (unsigned int i = 0; i < cProcesses; i++) {
+                // Get a handle to the process
+                HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processes[i]);
+
+                if (hProcess != NULL) {
+                    // Get the process name
+                    char szProcessName[MAX_PATH] = "<unknown>";
+                    GetModuleFileNameExA(hProcess, NULL, szProcessName, sizeof(szProcessName) / sizeof(char));
+
+                    // Extract the executable name from the full path
+                    std::string processPath = szProcessName;
+                    std::size_t found = processPath.find_last_of("\\");
+                    std::string processName = processPath.substr(found + 1);
+                    processName += " " + std::to_string(processes[i]);
+
+                    // Add the process name and path to the list
+                    runningApplications.push_back(std::make_pair(processName, processPath));
+
+                    // Close the handle to the process
+                    CloseHandle(hProcess);
+                }
+            }
+        }
+
+        return runningApplications;
+    }
+
+    std::pair<std::string, std::string> ChooseApplication() {
+        std::vector<std::pair<std::string, std::string>> runningApplications = GetRunningApplications();
+
+        //disply apps
+        std::cout << "Running Applications:" << std::endl;
+        for (size_t i = 0; i < runningApplications.size(); ++i) {
+            std::cout << i + 1 << ". " << runningApplications[i].first << std::endl;
+        }
+
+        //pick app
+        size_t choice;
+        std::cout << "Enter the number corresponding to the application you want to select: ";
+        std::cin >> choice;
+
+        if (choice > 0 && choice <= runningApplications.size()) {
+            return runningApplications[choice - 1];
+        }
+        else {
+            std::cerr << "Invalid choice. Exiting." << std::endl;
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    //Computer\reg add HKCU\Software\Policies\Microsoft\Windows\QoS
+    //REG Computer\reg add HKCU\Software\Policies\Microsoft\Windows\QoS\QoS_NAME /v VALUE_NAME /t REG_DWORD /d 1
+    void createQoS(std::string QoS_Name, std::string path, std::string ThrottleRate) {
+        std::list<std::string> commandList;
+
+        commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v Version /t REG_SZ /d " + "1.0");
+        commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"Application Name\" /t REG_SZ /d " + path);
+        commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v Protocol /t REG_SZ /d " + "*");
+        commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"Local Port\" /t REG_SZ /d " + "*");
+        commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"Local IP\" /t REG_SZ /d " + "*");
+        commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"Local IP Prefix Length\" /t REG_SZ /d " + "*");
+        commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"Remote Port\" /t REG_SZ /d " + "*");
+        commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"Remote IP\" /t REG_SZ /d " + "*");
+        commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"Remote IP Prefix Length\" /t REG_SZ /d " + "*");
+        commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"DSCP Value\" /t REG_SZ /d " + "-1");
+        commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"Throttle Rate\" /t REG_SZ /d " + ThrottleRate);
+        commandList.push_back("gpupdate /force");
+
+        for (const std::string& command : commandList) {
+            std::cout << command << std::endl;
+            system(command.c_str());
+        }
+        
+    }
+
+    void removeQoS(std::string QoS_Name) {
+        std::list<std::string> commandList;
+
+        commandList.push_back("reg delete HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /f");
+        commandList.push_back("gpupdate /force");
+
+        for (const std::string& command : commandList) {
+            std::cout << command << std::endl;
+            system(command.c_str());
+        }
+    }
+    
+    //If an app is using alot of bandwitdh and is not one of the apps to optimize and one of the apps to optimize is open than cap that apps bandwitdh
+    std::string FindAppNameByPID(DWORD pid) {
+        HANDLE processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+
+        if (processHandle == NULL) {
+            return "";
+        }
+        TCHAR filePath[MAX_PATH];
+        if (GetModuleFileNameEx(processHandle, NULL, filePath, MAX_PATH) == 0) {
+            CloseHandle(processHandle);
+            return "";
+        }
+        CloseHandle(processHandle);
+        return filePath;
+    }
+
+
+    void GetBandwidthUsage() {
+        DWORD processes[1024];
+        DWORD bytesReturned;
+        std::unordered_map<int, SIZE_T> processMap;
+        std::list<std::string> top10Apps;
+
+        if (EnumProcesses(processes, sizeof(processes), &bytesReturned)) {
+            DWORD numProcesses = bytesReturned / sizeof(DWORD);
+
+            for (DWORD i = 0; i < numProcesses; ++i) {
+                HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processes[i]);
+                if (hProcess != NULL) {
+                    PROCESS_MEMORY_COUNTERS_EX pmc;
+                    if (GetProcessMemoryInfo(hProcess, (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc))) {
+                        processMap[static_cast<int>(processes[i])] = pmc.PrivateUsage;
+                    }
+                    else {
+                        std::cerr << "Failed to get process memory info for PID " << processes[i] << ". Error code: " << GetLastError() << std::endl;
+                    }
+
+                    CloseHandle(hProcess);
+                }
+                else {
+                    std::cerr << "Failed to open process with PID " << processes[i] << " Error code: " << GetLastError() << std::endl;
+                }
+            }
+        }
+        else {
+            std::cerr << "Failed to enumerate processes. Error code: " << GetLastError() << std::endl;
+        }
+
+        std::vector<std::pair<int, SIZE_T>> sortedProcessVector(processMap.begin(), processMap.end());
+
+        std::sort(sortedProcessVector.begin(), sortedProcessVector.end(), [](const auto& a, const auto& b) {
+            return a.second > b.second;
+            });
+
+        for (const auto& entry : sortedProcessVector) {
+            std::cout << "Process ID: " << entry.first << ", Network Usage: " << entry.second << " bytes" << std::endl;
         }
     }
 
@@ -288,11 +453,11 @@ public:
     //    }
     //}
 
-    // TO THIS METHOD*************************************************************************
+    //tO THIS METHOD*************************************************************************
     bool loadBackUp(){
         return false;
     }
-    // TO THIS METHOD*************************************************************************
+    //tO THIS METHOD*************************************************************************
     bool createBackUp(){
         return false;
     }
@@ -518,7 +683,15 @@ int main() {
     std::cout << "****V0.1 C++ TCP optimizer****" << std::endl;
     std::cout << "******************************" << std::endl;
     
-    optimizer.autoTestValues();
+    optimizer.GetBandwidthUsage();
+    
+
+    //optimizer.createQoS("test", "firefox.exe", "5");
+    //optimizer.removeQoS("test");
+
+    //optimizer.applyBandwidthLimit();
+
+    //optimizer.autoTestValues();
 
     // std::cout << optimizer.speedTest();
 
