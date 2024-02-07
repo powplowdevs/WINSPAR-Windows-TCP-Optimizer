@@ -89,7 +89,7 @@ public:
         int returnCode = _pclose(pipe);
 
         if (returnCode != 0) {
-            std::cerr << "Command failed with return code: " << returnCode << std::endl;
+            std::cout << "Command failed with return code: " << returnCode << std::endl;
         }
 
         return result;
@@ -102,17 +102,33 @@ public:
     }
 
     //Set priority stuff
-    void listRunningProcesses() {
+
+    struct App {
+        std::string name;
+        std::string pid;
+
+        App(const std::string& appName, const std::string& appPid)
+            : name(appName), pid(appPid) {}
+    };
+
+    std::set<App> listRunningProcesses() {
         PROCESSENTRY32 entry;
         entry.dwSize = sizeof(PROCESSENTRY32);
 
         HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 
         std::set<std::string> uniqueProcesses; 
+        std::set<App> listOfPids;
 
         if (Process32First(snapshot, &entry)) {
             do {
                 uniqueProcesses.insert(entry.szExeFile);
+
+                std::string processID = std::to_string(entry.th32ProcessID);
+                std::string processName(entry.szExeFile);
+
+                listOfPids.insert(App(processName, processID));
+
             } while (Process32Next(snapshot, &entry));
         }
 
@@ -121,6 +137,8 @@ public:
         for (const auto& process : uniqueProcesses) {
             std::cout << process << std::endl;
         }
+
+        return listOfPids;
     }
 
     //Edit priority
@@ -133,11 +151,11 @@ public:
     void setProcessPriority() {
         while (true) {
             std::cout << "--------------------------------\n";
-            listRunningProcesses();
+            std::set<App> apps = listRunningProcesses();
 
             std::string processName;
             std::string priorityValue;
-            std::cout << "Enter the name of the process to set priority for or EXIT to start TCP optimaztion: ";
+            std::cout << "Enter the name of the process to set priority for (WITHOUT PID NUMBER) or EXIT to start TCP optimaztion: ";
             std::getline(std::cin, processName);
             if (processName == "EXIT") {
                 break;
@@ -146,6 +164,14 @@ public:
 
             std::cout << "Enter the priority value (idle, below normal, normal, above normal, high priority, realtime): ";
             std::getline(std::cin, priorityValue);
+
+            for (const auto& app : apps) {
+                if (app.name == processName) {
+                    std::cout << "PID of " + processName + " is " + app.pid;
+                    break;
+                }
+            }
+            
 
             std::string command = "wmic process where name=\"" + processName + "\" CALL setpriority \"" + priorityValue + "\"";
 
@@ -166,36 +192,27 @@ public:
         }
     }
 
-    //Magic chatGPT fucntion that grabs path and names of running 
     std::vector<std::pair<std::string, std::string>> GetRunningApplications() {
         std::vector<std::pair<std::string, std::string>> runningApplications;
 
-        // Get the list of running processes
         DWORD processes[1024], cbNeeded, cProcesses;
         if (EnumProcesses(processes, sizeof(processes), &cbNeeded)) {
-            // Calculate how many process identifiers were returned
             cProcesses = cbNeeded / sizeof(DWORD);
 
-            // Iterate through the list of processes
             for (unsigned int i = 0; i < cProcesses; i++) {
-                // Get a handle to the process
                 HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processes[i]);
 
                 if (hProcess != NULL) {
-                    // Get the process name
                     char szProcessName[MAX_PATH] = "<unknown>";
                     GetModuleFileNameExA(hProcess, NULL, szProcessName, sizeof(szProcessName) / sizeof(char));
 
-                    // Extract the executable name from the full path
                     std::string processPath = szProcessName;
                     std::size_t found = processPath.find_last_of("\\");
                     std::string processName = processPath.substr(found + 1);
                     processName += " " + std::to_string(processes[i]);
 
-                    // Add the process name and path to the list
                     runningApplications.push_back(std::make_pair(processName, processPath));
 
-                    // Close the handle to the process
                     CloseHandle(hProcess);
                 }
             }
@@ -222,7 +239,7 @@ public:
             return runningApplications[choice - 1];
         }
         else {
-            std::cerr << "Invalid choice. Exiting." << std::endl;
+            std::cout << "Invalid choice. Exiting." << std::endl;
             exit(EXIT_FAILURE);
         }
     }
@@ -280,8 +297,7 @@ public:
         return filePath;
     }
 
-
-    void GetBandwidthUsage() {
+    std::vector<std::pair<int, SIZE_T>> GetBandwidthUsage() {
         DWORD processes[1024];
         DWORD bytesReturned;
         std::unordered_map<int, SIZE_T> processMap;
@@ -297,30 +313,30 @@ public:
                     if (GetProcessMemoryInfo(hProcess, (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc))) {
                         processMap[static_cast<int>(processes[i])] = pmc.PrivateUsage;
                     }
-                    else {
-                        std::cerr << "Failed to get process memory info for PID " << processes[i] << ". Error code: " << GetLastError() << std::endl;
-                    }
+                    /*else {
+                        std::cout << "Failed to get process memory info for PID " << processes[i] << ". Error code: " << GetLastError() << std::endl;
+                    }*/
 
                     CloseHandle(hProcess);
                 }
-                else {
-                    std::cerr << "Failed to open process with PID " << processes[i] << " Error code: " << GetLastError() << std::endl;
-                }
+                /*else {
+                    std::cout << "Failed to open process with PID " << processes[i] << " Error code: " << GetLastError() << std::endl;
+                }*/
             }
         }
         else {
-            std::cerr << "Failed to enumerate processes. Error code: " << GetLastError() << std::endl;
+            std::cout << "Failed to enumerate processes. Error code: " << GetLastError() << std::endl;
         }
 
         std::vector<std::pair<int, SIZE_T>> sortedProcessVector(processMap.begin(), processMap.end());
 
         std::sort(sortedProcessVector.begin(), sortedProcessVector.end(), [](const auto& a, const auto& b) {
             return a.second > b.second;
-            });
+        });
 
-        for (const auto& entry : sortedProcessVector) {
-            std::cout << "Process ID: " << entry.first << ", Network Usage: " << entry.second << " bytes" << std::endl;
-        }
+        
+        sortedProcessVector.erase(sortedProcessVector.begin() + 5, sortedProcessVector.end());
+        return sortedProcessVector;
     }
 
     // REG EDIT FUNCTIONS
@@ -671,8 +687,9 @@ public:
     }
 };
 
-// GLOBAL FUNC's
-
+//List vars
+std::vector<std::string> optimizedPID = {};
+std::vector<std::string> currentQOS = {};
 
 // MAIN
 int main() {
@@ -683,7 +700,14 @@ int main() {
     std::cout << "****V0.1 C++ TCP optimizer****" << std::endl;
     std::cout << "******************************" << std::endl;
     
-    optimizer.GetBandwidthUsage();
+
+    optimizer.setProcessPriority();
+
+    /*std::vector<std::pair<int, SIZE_T>> vec = optimizer.GetBandwidthUsage();
+    for (const auto& entry : vec) {
+        std::cout << "Process ID: " << entry.first << ", Network Usage: " << entry.second << " bytes" << std::endl;
+    }*/
+
     
 
     //optimizer.createQoS("test", "firefox.exe", "5");
