@@ -1,9 +1,9 @@
 import java.awt.*;
-import java.awt.image.BufferedImage;
+import java.awt.image.*;
 import java.awt.event.*;
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.border.TitledBorder;
+import javax.swing.table.*;
+import javax.swing.border.*;
 
 class Test {
 
@@ -54,18 +54,58 @@ class Test {
                         }
                      }
                   } );
+            // // // // // // // // // // // // // // // // // // // // // // // // // 
             
+            //          gui.add(plafComponents, BorderLayout.NORTH); 
+            //                JPanel menuOptions = new JPanel(new GridLayout(2, 1)); 
+            //                menuOptions.setBorder(new TitledBorder("Main Menu")); 
+            //                gui.add(menuOptions, BorderLayout.WEST);
+            //                
+            //                Dimension size = new Dimension(150, 50); //important
+            //                
+            //                JButton button = new JButton("TCP Optimizer");
+            //                button.setPreferredSize(size);
+            //                menuOptions.add(button, GridLayout());
+            //    //                
+            //             //                JButton button1 = new JButton("Storage Optimizer"); 
+            //             //                button1.setPreferredSize(size); 
+            //             //                menuOptions.add(button1, BorderLayout.CENTER);
+            //                gui.add(plafComponents, BorderLayout.NORTH); 
+            //                JPanel menuOptions = new JPanel(new GridLayout(2, 1)); 
+            //                menuOptions.setBorder(new TitledBorder("Main Menu")); 
+            //                gui.add(menuOptions, BorderLayout.WEST); 
+            //                Dimension size = new Dimension(150, 50); //important 
+            //                JButton button = new JButton("TCP Optimizer");
+            //                button.setPreferredSize(size); menuOptions.add(button);
+            //                JButton button1 = new JButton("Storage Optimizer");
+            //                button1.setPreferredSize(size);
+            //                menuOptions.add(button1);
+            //                
                gui.add(plafComponents, BorderLayout.NORTH);
+       JPanel menuOptions = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 4));
+             //  menuOptions.setContentPane(contentCenter);
+               menuOptions.setBorder(new TitledBorder("Main Menu"));
+               gui.add(menuOptions);
+               
+               Dimension size = new Dimension(150, 50); //important
+               
+               JButton button = new JButton("TCP Optimizer");
+               button.setPreferredSize(size);
+               menuOptions.add(button);
+               
+               JButton button1 = new JButton("Storage Optimizer");
+               button1.setPreferredSize(size);
+               menuOptions.add(button1);
             
-               JPanel dynamicLabels = new JPanel(new BorderLayout(4,4));
-               dynamicLabels.setBorder( new TitledBorder("Main Menu") );
-               gui.add(dynamicLabels, BorderLayout.WEST);
-               dynamicLabels.setLayout(new GridLayout(0, 1));
-               JButton addNew = new JButton("TCP Optimizer");
-               dynamicLabels.add( addNew, BorderLayout.NORTH );
-               JButton addNew1 = new JButton("Storage Optimizer");
-               dynamicLabels.add(addNew1);
-            
+              //  Button tcpOP = new Button("TCP Optimization"); 
+            //                Button storageOP = new Button("Storage Optimization"); 
+            //                Button as = new Button(""); tcpOP.setBounds(30, 30, 150, 50); 
+            //                storageOP.setBounds(30, 80, 150, 50);
+            //                as.setBounds(40, 90, 50, 50); 
+            //                add(tcpOP); 
+            //                add(storageOP); 
+            //                add(as);
+            // // // // // // // // // // // // // // // // // // // // // // // // // 
                String[] header = {"NameofOption", "Options"};
                String[] a = new String[0];
                String[] names = System.getProperties().
