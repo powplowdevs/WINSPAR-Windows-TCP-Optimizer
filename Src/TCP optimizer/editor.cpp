@@ -28,12 +28,14 @@ std::vector<std::string> currentQOS = {};
 
 class TcpOptimizer {
 public:
-    std::vector<std::string> qosNames;
 
+    //**This is dependent on the speedtest CLI this should be changed later**//
+    //**Run command line speed test**
     double speedTest() {
-        //Run command
+        //Prompt command line
         std::cout << "Running SpeedTest... " << std::endl;
         
+        //Open pipe to run command and read command
         FILE* pipe = popen("speedtest", "r");
         if (!pipe) {
             std::cout << "popen() failed!" << std::endl;
@@ -50,14 +52,18 @@ public:
             result += buffer;
         }
 
+        //Close pipe
         pclose(pipe);
-
+        
+        //Grab output
         std::istringstream outStream(result);
         std::string line;
 
+        //Calcuate return speed var
         double downloadSpeed = 0.0;
         double uploadSpeed = 0.0;
 
+        //Parse output to grab download and upload values
         while (std::getline(outStream, line)) {
             if (line.find("Download:") != std::string::npos) {
                 std::istringstream ss(line.substr(line.find(":") + 1));
@@ -68,21 +74,28 @@ public:
             }
         }
 
+        //Promt command line
         std::cout << "SpeedTest done, Speed was: " << downloadSpeed + uploadSpeed << std::endl;
 
         return downloadSpeed+uploadSpeed;
     }
 
+    //**Run a command in command line**
+    //**Pre: String command**
+    //**Post: String command output**
     std::string runCommand(const std::string& command) {
-        // magic chatGPT code I will never understand ↓↓↓
+        //Open pipe to run command and read command
+        //The 2>&1 makes it grab the errors to or somthing like that i dont really understand it
         FILE* pipe = _popen((command + " 2>&1").c_str(), "r");
-        // Code that makes more sense ↓↓↓
+        //Code that makes more sense ↓↓↓
         if (!pipe) {
             std::cout << "Failed to open pipe for command: " << command << std::endl;
             return "----COMMAND_FAIL----";
         }
 
+        //Buffer to grab output
         char buffer[128];
+        //Grab output
         std::string result = "";
         while (!feof(pipe)) {
             if (fgets(buffer, 128, pipe) != nullptr)
@@ -98,22 +111,30 @@ public:
         return result;
     }
 
+    //**Grab the current TCP settings**
+    //**Post: String command promt output with TCP settings**
     std::string grabCurrentTcpValues() {
         std::string globalVars = runCommand("netsh interface tcp show global");
         std::string wsh = runCommand("netsh int tcp show heuristics");
         return globalVars + "" + wsh;
     }
 
-    //Set priority stuff
+    //**List and or grab list of current running process** 
+    //**Pre: bool if true function will display list of running processes if false nothing will be displayed**
+    //**Post: Vector of pairs with PID and Name**
     std::vector<std::pair<std::string, std::string>> listRunningProcesses(bool printValues) {
+        //WinAPI requred vars required
         PROCESSENTRY32 entry;
         entry.dwSize = sizeof(PROCESSENTRY32);
 
+        //Snapshot of current running apps
         HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 
+        //Lists to return
         std::set<std::string> uniqueProcesses; 
         std::vector<std::pair<std::string, std::string>> listOfPids;
 
+        //Populate list with values
         if (Process32First(snapshot, &entry)) {
             do {
                 uniqueProcesses.insert(entry.szExeFile);
@@ -126,8 +147,10 @@ public:
             } while (Process32Next(snapshot, &entry));
         }
 
+        //Close handle
         CloseHandle(snapshot);
 
+        //Display processes
         if (printValues) {
             for (const auto& process : uniqueProcesses) {
                 std::cout << process << std::endl;
@@ -137,33 +160,38 @@ public:
         return listOfPids;
     }
 
-    //Edit priority
-    //idle: 64 (or "idle")
-    //below normal : 16384 (or "below normal")
-    //normal : 32 (or "normal")
-    //above normal : 32768 (or "above normal")
-    //high priority : 128 (or "high priority")
-    //real time : 256 (or "realtime")
+    //**Edit priority of apps**
+    //****idle: 64 (or "idle"), below normal : 16384 (or "below normal"), normal : 32 (or "normal"), above normal : 32768 (or "above normal"), high priority : 128 (or "high priority"), real time : 256 (or "realtime")****
     void setProcessPriority() {
+        //Main loop
         while (true) {
             std::cout << "--------------------------------\n";
             std::vector<std::pair<std::string, std::string>> apps = listRunningProcesses(true);
 
             std::string processName;
             std::string priorityValue;
+            //Promt user
             std::cout << "Enter the name of the process to set priority for, or EXIT to start TCP optimaztion: ";
+            //Grab user input
             std::getline(std::cin, processName);
-
+            
+            //Exit
             if (processName == "EXIT") {
                 break;
             }
 
+            //Promt user
             std::cout << "Enter the priority value (idle, below normal, normal, above normal, high priority, realtime): ";
+            //Grab user input
             std::getline(std::cin, priorityValue);
 
+            //Create command
             std::string command = "wmic process where name=\"" + processName + "\" CALL setpriority \"" + priorityValue + "\"";
 
+            //Run command
             std::string result = runCommand(command);
+            //Handle error or success
+            //Success
             if (!(result.compare("Value map does not contain the input value for this property.") >= 0)) {
                 std::cout << "Priority command executed successfully." << std::endl;
                 std::cout << "Press Enter to continue...";
@@ -175,6 +203,7 @@ public:
                     }
                 }
             }
+            //Error
             else {
                 std::cout << "Error executing priority command." << std::endl;
                 std::cout << "Hint: make sure you enter your value with from the list ie: normal" << std::endl;
@@ -185,17 +214,27 @@ public:
         }
     }
 
+    //**Grab list of running apps**
+    //**Post: Vector of pairs with PID and Path to app**
     std::vector<std::pair<std::string, std::string>> GetRunningApplications() {
+        //Create list to return
         std::vector<std::pair<std::string, std::string>> runningApplications;
 
+        //WinAPI requred vars required
         DWORD processes[1024], cbNeeded, cProcesses;
+        //Grab list of process identifier and populate processes DWORD
         if (EnumProcesses(processes, sizeof(processes), &cbNeeded)) {
+            //Divied number of bytes from EnumProcesses by size on DWORD to find amount of running processes
             cProcesses = cbNeeded / sizeof(DWORD);
 
+            //Loop procesess
             for (unsigned int i = 0; i < cProcesses; i++) {
+                //Grab handle of current process
                 HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processes[i]);
 
+                //If process exists
                 if (hProcess != NULL) {
+                    //Populate return list
                     char szProcessName[MAX_PATH] = "<unknown>";
                     GetModuleFileNameExA(hProcess, NULL, szProcessName, sizeof(szProcessName) / sizeof(char));
 
@@ -214,31 +253,35 @@ public:
         return runningApplications;
     }
 
+    //**Allow user to choose applications from list of running applications**
+    //**Post: Pair with PID and EXE name
     std::pair<std::string, std::string> ChooseApplication() {
+        //Grab list of running applications
         std::vector<std::pair<std::string, std::string>> runningApplications = GetRunningApplications();
 
-        //disply apps
+        //Disply applicaions
         std::cout << "Running Applications:" << std::endl;
         for (size_t i = 0; i < runningApplications.size(); ++i) {
             std::cout << i + 1 << ". " << runningApplications[i].first << std::endl;
         }
 
-        //pick app
+        //Let user pick a applicaion
         size_t choice;
         std::cout << "Enter the number corresponding to the application you want to select: ";
         std::cin >> choice;
 
+        //Handle error
         if (choice > 0 && choice <= runningApplications.size()) {
             return runningApplications[choice - 1];
         }
+        //Error
         else {
             std::cout << "Invalid choice. Exiting." << std::endl;
             exit(EXIT_FAILURE);
         }
     }
 
-    //Computer\reg add HKCU\Software\Policies\Microsoft\Windows\QoS
-    //REG Computer\reg add HKCU\Software\Policies\Microsoft\Windows\QoS\QoS_NAME /v VALUE_NAME /t REG_DWORD /d 1
+    //**START HERE
     void createQoS(std::string QoS_Name, std::string path, std::string ThrottleRate) {
         std::list<std::string> commandList;
 
