@@ -22,6 +22,9 @@
 #include <stdio.h>
 #include <set>
 
+//List vars
+std::vector<std::pair<std::string, std::string>> optimizedApps = {};
+std::vector<std::string> currentQOS = {};
 
 class TcpOptimizer {
 public:
@@ -102,23 +105,14 @@ public:
     }
 
     //Set priority stuff
-
-    struct App {
-        std::string name;
-        std::string pid;
-
-        App(const std::string& appName, const std::string& appPid)
-            : name(appName), pid(appPid) {}
-    };
-
-    std::set<App> listRunningProcesses() {
+    std::vector<std::pair<std::string, std::string>> listRunningProcesses(bool printValues) {
         PROCESSENTRY32 entry;
         entry.dwSize = sizeof(PROCESSENTRY32);
 
         HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 
         std::set<std::string> uniqueProcesses; 
-        std::set<App> listOfPids;
+        std::vector<std::pair<std::string, std::string>> listOfPids;
 
         if (Process32First(snapshot, &entry)) {
             do {
@@ -127,15 +121,17 @@ public:
                 std::string processID = std::to_string(entry.th32ProcessID);
                 std::string processName(entry.szExeFile);
 
-                listOfPids.insert(App(processName, processID));
+                listOfPids.push_back(std::make_pair(processName, processID));
 
             } while (Process32Next(snapshot, &entry));
         }
 
         CloseHandle(snapshot);
 
-        for (const auto& process : uniqueProcesses) {
-            std::cout << process << std::endl;
+        if (printValues) {
+            for (const auto& process : uniqueProcesses) {
+                std::cout << process << std::endl;
+            }
         }
 
         return listOfPids;
@@ -151,27 +147,19 @@ public:
     void setProcessPriority() {
         while (true) {
             std::cout << "--------------------------------\n";
-            std::set<App> apps = listRunningProcesses();
+            std::vector<std::pair<std::string, std::string>> apps = listRunningProcesses(true);
 
             std::string processName;
             std::string priorityValue;
-            std::cout << "Enter the name of the process to set priority for (WITHOUT PID NUMBER) or EXIT to start TCP optimaztion: ";
+            std::cout << "Enter the name of the process to set priority for, or EXIT to start TCP optimaztion: ";
             std::getline(std::cin, processName);
+
             if (processName == "EXIT") {
                 break;
             }
 
-
             std::cout << "Enter the priority value (idle, below normal, normal, above normal, high priority, realtime): ";
             std::getline(std::cin, priorityValue);
-
-            for (const auto& app : apps) {
-                if (app.name == processName) {
-                    std::cout << "PID of " + processName + " is " + app.pid;
-                    break;
-                }
-            }
-            
 
             std::string command = "wmic process where name=\"" + processName + "\" CALL setpriority \"" + priorityValue + "\"";
 
@@ -181,6 +169,11 @@ public:
                 std::cout << "Press Enter to continue...";
                 std::cin.ignore();
                 std::cout << "--------------------------------\n|                               |\n|                               |\n|                               |\n|                               |\n";
+                for (const auto& pair : apps) {
+                    if (pair.first == processName) {
+                        optimizedApps.push_back(pair);
+                    }
+                }
             }
             else {
                 std::cout << "Error executing priority command." << std::endl;
@@ -266,6 +259,8 @@ public:
             std::cout << command << std::endl;
             system(command.c_str());
         }
+
+        currentQOS.push_back(QoS_Name);
         
     }
 
@@ -279,19 +274,38 @@ public:
             std::cout << command << std::endl;
             system(command.c_str());
         }
+
+        auto it = std::find(currentQOS.begin(), currentQOS.end(), QoS_Name);
+        currentQOS.erase(it);
     }
     
     //If an app is using alot of bandwitdh and is not one of the apps to optimize and one of the apps to optimize is open than cap that apps bandwitdh
-    std::string FindAppNameByPID(DWORD pid) {
+    std::string FindAppNameByPID(const std::string& pidStr) {
+        //im be honest wtf dose this do lmao
+        DWORD pid;
+        try {
+            pid = std::stoul(pidStr);
+        }
+        catch (const std::invalid_argument& e) {
+            std::cerr << "Invalid argument: " << e.what() << std::endl;
+            return "";
+        }
+        catch (const std::out_of_range& e) {
+            std::cerr << "Out of range: " << e.what() << std::endl;
+            return "";
+        }
+
+        //this makes more sense
         HANDLE processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
 
         if (processHandle == NULL) {
-            return "";
+            return "boo!";
         }
+
         TCHAR filePath[MAX_PATH];
         if (GetModuleFileNameEx(processHandle, NULL, filePath, MAX_PATH) == 0) {
             CloseHandle(processHandle);
-            return "";
+            return "AHH!";
         }
         CloseHandle(processHandle);
         return filePath;
@@ -337,6 +351,39 @@ public:
         
         sortedProcessVector.erase(sortedProcessVector.begin() + 5, sortedProcessVector.end());
         return sortedProcessVector;
+    }
+    
+    std::string extractFileName(const std::string& path) {
+        size_t lastSeparatorPos = path.find_last_of("\\");
+        return path.substr(lastSeparatorPos + 1);
+    }
+
+    bool isInVector(const std::string& str, const std::vector<std::string>& vec) {
+        auto it = std::find(vec.begin(), vec.end(), str);
+        return it != vec.end();
+    }
+
+    void manageBandwidthUsage() {
+        std::vector<std::pair<int, SIZE_T>> usage = GetBandwidthUsage();
+        bool flip = false;
+        int total = 0;
+
+        for (const auto& pair : usage) {
+            for (const auto& Opair : optimizedApps) {
+                //check if this is a optimzed app
+                if (std::to_string(pair.first) == Opair.second) {
+                    flip = true;
+                }
+                total = total + static_cast<int>(pair.second);
+            }
+            //if its not a optimzed app limit it
+            if (flip == false) {
+                std::string name = extractFileName(FindAppNameByPID(std::to_string(pair.first)) + "-LISTQoS");
+                if (!isInVector(name, currentQOS)) {
+                    createQoS(name, name, "10");//MAYBE EDIT THROLLTE RATE LATER
+                }
+            }
+        }
     }
 
     // REG EDIT FUNCTIONS
@@ -468,6 +515,7 @@ public:
     //        std::cout << "Failed to set Large Send Offload to " << lsoOption << "." << std::endl;
     //    }
     //}
+
 
     //tO THIS METHOD*************************************************************************
     bool loadBackUp(){
@@ -687,21 +735,23 @@ public:
     }
 };
 
-//List vars
-std::vector<std::string> optimizedPID = {};
-std::vector<std::string> currentQOS = {};
-
 // MAIN
 int main() {
 
     TcpOptimizer optimizer;
+    
 
     std::cout << "******************************" << std::endl;
     std::cout << "****V0.1 C++ TCP optimizer****" << std::endl;
     std::cout << "******************************" << std::endl;
     
+    /*optimizer.setProcessPriority();
+    optimizer.autoTestValues();
+    optimizer.manageBandwidthUsage();*/
 
-    optimizer.setProcessPriority();
+    optimizer.resetTodefault();
+
+    //optimizer.setProcessPriority();
 
     /*std::vector<std::pair<int, SIZE_T>> vec = optimizer.GetBandwidthUsage();
     for (const auto& entry : vec) {
