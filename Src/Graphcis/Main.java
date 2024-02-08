@@ -17,7 +17,7 @@ public class Main extends JFrame {
       add(as);
       tcpOP.setBounds(30,30,150,50); 
       storageOP.setBounds(30,80,150,50); 
-       as.setBounds(40,90,50,50); 
+      as.setBounds(40,90,50,50); 
    
       setTitle("Test");
       setSize(972, 641);
