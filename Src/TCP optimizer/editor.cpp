@@ -428,7 +428,7 @@ public:
         auto it = std::find(vec.begin(), vec.end(), str);
         return it != vec.end();
     }
-
+ 
     //**Apply bandwitdh throttle QoS to apps that are deemed to need it
     void manageBandwidthUsage() {
         //Grab list of apps and their usage

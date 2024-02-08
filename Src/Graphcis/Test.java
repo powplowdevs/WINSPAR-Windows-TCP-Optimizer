@@ -82,21 +82,24 @@ class Test {
             //                menuOptions.add(button1);
             //                
                gui.add(plafComponents, BorderLayout.NORTH);
-       JPanel menuOptions = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 4));
-             //  menuOptions.setContentPane(contentCenter);
+            
+               JPanel menuOptions = new JPanel();
+               menuOptions.setLayout(new BoxLayout(menuOptions, BoxLayout.Y_AXIS)); // Set vertical layout
                menuOptions.setBorder(new TitledBorder("Main Menu"));
-               gui.add(menuOptions);
-               
-               Dimension size = new Dimension(150, 50); //important
-               
-               JButton button = new JButton("TCP Optimizer");
+               gui.add(menuOptions, BorderLayout.WEST);
+            
+               Dimension size = new Dimension(150, 50);
+            
+               JButton button = new JButton("   TCP Optimizer    ");
                button.setPreferredSize(size);
                menuOptions.add(button);
-               
+            
                JButton button1 = new JButton("Storage Optimizer");
                button1.setPreferredSize(size);
                menuOptions.add(button1);
             
+               gui.setVisible(true);
+                  
               //  Button tcpOP = new Button("TCP Optimization"); 
             //                Button storageOP = new Button("Storage Optimization"); 
             //                Button as = new Button(""); tcpOP.setBounds(30, 30, 150, 50); 
