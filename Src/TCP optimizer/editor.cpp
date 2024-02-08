@@ -29,8 +29,8 @@ std::vector<std::string> currentQOS = {};
 class TcpOptimizer {
 public:
 
-    //**This is dependent on the speedtest CLI this should be changed later**//
-    //**Run command line speed test**
+    //****This is dependent on the speedtest CLI this should be changed later****
+    //**Run command line speed test
     double speedTest() {
         //Prompt command line
         std::cout << "Running SpeedTest... " << std::endl;
@@ -80,9 +80,9 @@ public:
         return downloadSpeed+uploadSpeed;
     }
 
-    //**Run a command in command line**
-    //**Pre: String command**
-    //**Post: String command output**
+    //**Run a command in command line
+    //**Pre: String command
+    //**Post: String command output
     std::string runCommand(const std::string& command) {
         //Open pipe to run command and read command
         //The 2>&1 makes it grab the errors to or somthing like that i dont really understand it
@@ -111,17 +111,17 @@ public:
         return result;
     }
 
-    //**Grab the current TCP settings**
-    //**Post: String command promt output with TCP settings**
+    //**Grab the current TCP settings
+    //**Post: String command promt output with TCP settings
     std::string grabCurrentTcpValues() {
         std::string globalVars = runCommand("netsh interface tcp show global");
         std::string wsh = runCommand("netsh int tcp show heuristics");
         return globalVars + "" + wsh;
     }
 
-    //**List and or grab list of current running process** 
-    //**Pre: bool if true function will display list of running processes if false nothing will be displayed**
-    //**Post: Vector of pairs with PID and Name**
+    //**List and or grab list of current running process
+    //**Pre: bool if true function will display list of running processes if false nothing will be displayed
+    //**Post: Vector of pairs with PID and Name
     std::vector<std::pair<std::string, std::string>> listRunningProcesses(bool printValues) {
         //WinAPI requred vars required
         PROCESSENTRY32 entry;
@@ -160,7 +160,7 @@ public:
         return listOfPids;
     }
 
-    //**Edit priority of apps**
+    //**Edit priority of apps
     //****idle: 64 (or "idle"), below normal : 16384 (or "below normal"), normal : 32 (or "normal"), above normal : 32768 (or "above normal"), high priority : 128 (or "high priority"), real time : 256 (or "realtime")****
     void setProcessPriority() {
         //Main loop
@@ -177,7 +177,7 @@ public:
             
             //Exit
             if (processName == "EXIT") {
-                break;
+                return;
             }
 
             //Promt user
@@ -214,8 +214,8 @@ public:
         }
     }
 
-    //**Grab list of running apps**
-    //**Post: Vector of pairs with PID and Path to app**
+    //**Grab list of running apps
+    //**Post: Vector of pairs with PID and Path to app
     std::vector<std::pair<std::string, std::string>> GetRunningApplications() {
         //Create list to return
         std::vector<std::pair<std::string, std::string>> runningApplications;
@@ -281,8 +281,10 @@ public:
         }
     }
 
-    //**START HERE
+    //**Create custom QoS policy
+    //**Pre: String QoS policy name, String path QoS effected aplication path, String Bandwidth throttle rate/amount
     void createQoS(std::string QoS_Name, std::string path, std::string ThrottleRate) {
+        //Build commands to run
         std::list<std::string> commandList;
 
         commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v Version /t REG_SZ /d " + "1.0");
@@ -298,6 +300,7 @@ public:
         commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"Throttle Rate\" /t REG_SZ /d " + ThrottleRate);
         commandList.push_back("gpupdate /force");
 
+        //Edit registry and add QoS
         for (const std::string& command : commandList) {
             std::cout << command << std::endl;
             system(command.c_str());
@@ -307,12 +310,16 @@ public:
         
     }
 
+    //**Remove custom QoS policy
+    //**Pre: String QoS policty name
     void removeQoS(std::string QoS_Name) {
+        //Build commands to run
         std::list<std::string> commandList;
 
         commandList.push_back("reg delete HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /f");
         commandList.push_back("gpupdate /force");
 
+        //Edit registry and remove QoS
         for (const std::string& command : commandList) {
             std::cout << command << std::endl;
             system(command.c_str());
@@ -322,9 +329,11 @@ public:
         currentQOS.erase(it);
     }
     
-    //If an app is using alot of bandwitdh and is not one of the apps to optimize and one of the apps to optimize is open than cap that apps bandwitdh
+    //**Find an aplication path with its PID
+    //**Pre: String application PID
+    //**Post: String application path
     std::string FindAppNameByPID(const std::string& pidStr) {
-        //im be honest wtf dose this do lmao
+        //ima be honest idk wtf this part dose lmao
         DWORD pid;
         try {
             pid = std::stoul(pidStr);
@@ -338,7 +347,8 @@ public:
             return "";
         }
 
-        //this makes more sense
+        //Create a handle to whatever we just did on top
+        //I really cant be botherd to comment the rest ig i just opend a 3rd eye when i made this function
         HANDLE processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
 
         if (processHandle == NULL) {
@@ -354,15 +364,21 @@ public:
         return filePath;
     }
 
+    //**Grab bandwitdh usage of all running applications
+    //**Post: Vector list of pairs with PID and usage amount
     std::vector<std::pair<int, SIZE_T>> GetBandwidthUsage() {
+        //WinAPI requred vars required
         DWORD processes[1024];
         DWORD bytesReturned;
+        //List of apps and their usage
         std::unordered_map<int, SIZE_T> processMap;
         std::list<std::string> top10Apps;
 
+        //Populate list
         if (EnumProcesses(processes, sizeof(processes), &bytesReturned)) {
+            //Calculate amount of running processes
             DWORD numProcesses = bytesReturned / sizeof(DWORD);
-
+            //loop through processes
             for (DWORD i = 0; i < numProcesses; ++i) {
                 HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processes[i]);
                 if (hProcess != NULL) {
@@ -385,6 +401,7 @@ public:
             std::cout << "Failed to enumerate processes. Error code: " << GetLastError() << std::endl;
         }
 
+        //Cut list to grab only top 10
         std::vector<std::pair<int, SIZE_T>> sortedProcessVector(processMap.begin(), processMap.end());
 
         std::sort(sortedProcessVector.begin(), sortedProcessVector.end(), [](const auto& a, const auto& b) {
@@ -396,24 +413,32 @@ public:
         return sortedProcessVector;
     }
     
+    //**Grab file name from path
+    //**Pre: String path to file
+    //**Post: String file name
     std::string extractFileName(const std::string& path) {
         size_t lastSeparatorPos = path.find_last_of("\\");
         return path.substr(lastSeparatorPos + 1);
     }
 
+    //**Check if value is in vector list
+    //**Pre: String value to check, Vector of strings to check for value in
+    //**Post: Bool true if value is in vector false if otherwise
     bool isInVector(const std::string& str, const std::vector<std::string>& vec) {
         auto it = std::find(vec.begin(), vec.end(), str);
         return it != vec.end();
     }
 
+    //**Apply bandwitdh throttle QoS to apps that are deemed to need it
     void manageBandwidthUsage() {
+        //Grab list of apps and their usage
         std::vector<std::pair<int, SIZE_T>> usage = GetBandwidthUsage();
         bool flip = false;
         int total = 0;
 
         for (const auto& pair : usage) {
             for (const auto& Opair : optimizedApps) {
-                //check if this is a optimzed app
+                //Check if this is a optimzed app
                 if (std::to_string(pair.first) == Opair.second) {
                     flip = true;
                 }
@@ -429,7 +454,8 @@ public:
         }
     }
 
-    // REG EDIT FUNCTIONS
+    //**REG EDIT FUNCTIONS
+    //**Each edits a diffrent part of the registry
     void editTcpConnectionSpeed(int speed) { 
         std::string command = "reg add HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\WinHttp /v ConnectionSpeed /t REG_DWORD /d " + std::to_string(speed) + " /f";
         int result = std::system(command.c_str());
@@ -539,7 +565,6 @@ public:
     //     }
     // }
 
-
     //void editLargeSendOffload(const std::string& lsoOption) {
     //    // Construct the PowerShell command
     //    std::string command = "powershell -Command \"";
@@ -569,6 +594,8 @@ public:
         return false;
     }
 
+    //**Resets all TCP registry edits to defualt values
+    //**Post: Bool true no matter what
     bool resetTodefault(){
         editTcpWindowAutoTuning("normal");
         std::cout << "1" << std::endl;
@@ -598,8 +625,10 @@ public:
         return true;
     }
 
+    //**Manually lets user edit TCP registry values
+    //**Post: Bool true no matter what
     bool manualTestVal(const std::map<std::string, std::string>& userSettings) {
-        //apply settings
+        //Apply settings
         for (const auto& setting : userSettings) {
             const std::string& param = setting.first;
             const std::string& value = setting.second;
@@ -618,7 +647,7 @@ public:
                 editEcnCapability(value);
             }
 
-            // Run speed test
+            //Run speed test
             double speed = speedTest();
             std::cout << "Speed with " << param << " set to " << value << ": " << speed << std::endl;
         }
@@ -626,8 +655,7 @@ public:
         return true;
     }
 
-
-    //Run though each registry edit and test each value
+    //**Run though each registry edit and test each value
     bool autoTestValues(){
         //Set prioritys
         setProcessPriority();
@@ -788,11 +816,11 @@ int main() {
     std::cout << "****V0.1 C++ TCP optimizer****" << std::endl;
     std::cout << "******************************" << std::endl;
     
-    /*optimizer.setProcessPriority();
+    optimizer.setProcessPriority();
     optimizer.autoTestValues();
-    optimizer.manageBandwidthUsage();*/
+    optimizer.manageBandwidthUsage();
 
-    optimizer.resetTodefault();
+    //optimizer.resetTodefault();
 
     //optimizer.setProcessPriority();
 
