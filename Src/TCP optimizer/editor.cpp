@@ -28,9 +28,9 @@ std::vector<std::string> currentQOS = {};
 
 class TcpOptimizer {
 public:
-
     //****This is dependent on the speedtest CLI this should be changed later****
     //**Run command line speed test
+    //**Post: Double of sum of download and upload speed
     double speedTest() {
         //Prompt command line
         std::cout << "Running SpeedTest... " << std::endl;
@@ -162,7 +162,7 @@ public:
 
     //**Edit priority of apps
     //****idle: 64 (or "idle"), below normal : 16384 (or "below normal"), normal : 32 (or "normal"), above normal : 32768 (or "above normal"), high priority : 128 (or "high priority"), real time : 256 (or "realtime")****
-    void setProcessPriority() {
+    void setProcessPriorityCLI() {
         //Main loop
         while (true) {
             std::cout << "--------------------------------\n";
@@ -214,6 +214,34 @@ public:
         }
     }
 
+    //**Edit priority of single app
+    //**Pre: String name of app and priority value to set to
+    //**Post: Bool if true command exucuted successfully if false command had an error
+    bool setProcessPriority(std::string name, std::string value) {
+        std::string processName = name;
+        std::string priorityValue = value;
+        std::vector<std::pair<std::string, std::string>> apps = listRunningProcesses(false);
+        //Create command
+        std::string command = "wmic process where name=\"" + processName + "\" CALL setpriority \"" + priorityValue + "\"";
+
+        //Run command
+        std::string result = runCommand(command);
+        //Handle error or success
+        //Success
+        if (!(result.compare("Value map does not contain the input value for this property.") >= 0)) {
+            for (const auto& pair : apps) {
+                if (pair.first == processName) {
+                    optimizedApps.push_back(pair);
+                }
+            }
+            return true;
+        }
+        //Error
+        else {
+            return false;
+        }
+    }
+    
     //**Grab list of running apps
     //**Post: Vector of pairs with PID and Path to app
     std::vector<std::pair<std::string, std::string>> GetRunningApplications() {
@@ -255,7 +283,8 @@ public:
 
     //**Allow user to choose applications from list of running applications**
     //**Post: Pair with PID and EXE name
-    std::pair<std::string, std::string> ChooseApplication() {
+    //***IS NOT USED MARK FOR REMOVEAL SOON**
+    std::pair<std::string, std::string> ChooseApplicationCLI() {
         //Grab list of running applications
         std::vector<std::pair<std::string, std::string>> runningApplications = GetRunningApplications();
 
@@ -331,7 +360,7 @@ public:
     
     //**Find an aplication path with its PID
     //**Pre: String application PID
-    //**Post: String application path
+    //**Post: String application path if ran sucessfully empty string if not
     std::string FindAppNameByPID(const std::string& pidStr) {
         //ima be honest idk wtf this part dose lmao
         DWORD pid;
@@ -352,13 +381,13 @@ public:
         HANDLE processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
 
         if (processHandle == NULL) {
-            return "boo!";
+            return "";
         }
 
         TCHAR filePath[MAX_PATH];
         if (GetModuleFileNameEx(processHandle, NULL, filePath, MAX_PATH) == 0) {
             CloseHandle(processHandle);
-            return "AHH!";
+            return "";
         }
         CloseHandle(processHandle);
         return filePath;
@@ -408,8 +437,24 @@ public:
             return a.second > b.second;
         });
 
+        int index = 15;
+        while (true)
+        {
+            try
+            {
+                sortedProcessVector.erase(sortedProcessVector.begin() + 10, sortedProcessVector.end());
+                break;
+            }
+            catch (const std::exception&)
+            {
+                index--;
+                if (index <= 0) {
+                    return sortedProcessVector;
+                }
+                continue;
+            }
+        }
         
-        sortedProcessVector.erase(sortedProcessVector.begin() + 5, sortedProcessVector.end());
         return sortedProcessVector;
     }
     
@@ -430,6 +475,7 @@ public:
     }
  
     //**Apply bandwitdh throttle QoS to apps that are deemed to need it
+    //**FINISH THIS
     void manageBandwidthUsage() {
         //Grab list of apps and their usage
         std::vector<std::pair<int, SIZE_T>> usage = GetBandwidthUsage();
@@ -448,14 +494,15 @@ public:
             if (flip == false) {
                 std::string name = extractFileName(FindAppNameByPID(std::to_string(pair.first)) + "-LISTQoS");
                 if (!isInVector(name, currentQOS)) {
-                    createQoS(name, name, "10");//MAYBE EDIT THROLLTE RATE LATER
+                    createQoS(name, name, "5");//MAYBE EDIT THROLLTE RATE LATER
                 }
             }
         }
     }
 
     //**REG EDIT FUNCTIONS
-    //**Each edits a diffrent part of the registry
+    //**Each edits a diffrent part of the registry 
+    //**DO THIS!!!!!!!
     void editTcpConnectionSpeed(int speed) { 
         std::string command = "reg add HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\WinHttp /v ConnectionSpeed /t REG_DWORD /d " + std::to_string(speed) + " /f";
         int result = std::system(command.c_str());
@@ -656,9 +703,10 @@ public:
     }
 
     //**Run though each registry edit and test each value
+    //**Post: Bool true no matter what
     bool autoTestValues(){
         //Set prioritys
-        setProcessPriority();
+        setProcessPriorityCLI();
 
         std::map<std::string, std::list<std::string>> RegistryEditDict = {  
         { "TCPWindowAutoTuning", {"disabled", "highlyrestricted", "restricted", "normal", "experimental"}},
@@ -816,13 +864,13 @@ int main() {
     std::cout << "****V0.1 C++ TCP optimizer****" << std::endl;
     std::cout << "******************************" << std::endl;
     
-    optimizer.setProcessPriority();
-    optimizer.autoTestValues();
+    optimizer.setProcessPriorityCLI();
+    //optimizer.autoTestValues();
     optimizer.manageBandwidthUsage();
 
     //optimizer.resetTodefault();
 
-    //optimizer.setProcessPriority();
+    //optimizer.setProcessPriorityCLI();
 
     /*std::vector<std::pair<int, SIZE_T>> vec = optimizer.GetBandwidthUsage();
     for (const auto& entry : vec) {
