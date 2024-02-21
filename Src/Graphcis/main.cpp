@@ -1,4 +1,4 @@
-#include <gtk/gtk.h>
+#include <Includes/gtk/gtk.h>
 
 // Function to handle the "destroy" event
 void on_window_closed(GtkWidget* widget, gpointer data) {
