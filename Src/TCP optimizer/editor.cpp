@@ -21,10 +21,17 @@
 #include <thread>
 #include <stdio.h>
 #include <set>
-
 #include "editor.h"
 
-
+//Colors
+#define RESET   "\033[0m"
+#define RED     "\033[31m"
+#define GREEN   "\033[32m"
+#define YELLOW  "\033[33m"
+#define BLUE    "\033[34m"
+#define MAGENTA "\033[35m"
+#define CYAN    "\033[36m"
+#define WHITE   "\033[37m"
 
 //List vars
 std::vector<std::pair<std::string, std::string>> coptimizedApps = {};
@@ -81,6 +88,57 @@ double TcpOptimizer::speedTest() {
 
     return downloadSpeed+uploadSpeed;
 }
+
+//****This is dependent on the speedtest CLI this should be changed later****
+//**Run command line speed test with good looking outputs for user
+void TcpOptimizer::speedTestCLI() {
+    //Prompt command 
+    std::cout << YELLOW << "Running SpeedTest... " << std::endl;
+    std::cout << RESET;
+
+    //Open pipe to run command and read command
+    FILE* pipe = popen("speedtest", "r");
+    if (!pipe) {
+        std::cout << "popen() failed!" << std::endl;
+    }
+
+    //Buffer to store the command output
+    char buffer[128];
+    std::string result = "";
+
+    //Read the command output line by line
+    while (fgets(buffer, sizeof(buffer), pipe) != NULL) {
+        result += buffer;
+    }
+
+    //Close pipe
+    pclose(pipe);
+
+    //Grab output
+    std::istringstream outStream(result);
+    std::string line;
+
+    //Calcuate return speed var
+    double downloadSpeed = 0.0;
+    double uploadSpeed = 0.0;
+
+    //Parse output to grab download and upload values
+    while (std::getline(outStream, line)) {
+        if (line.find("Download:") != std::string::npos) {
+            std::istringstream ss(line.substr(line.find(":") + 1));
+            ss >> downloadSpeed;
+        }
+        else if (line.find("Upload:") != std::string::npos) {
+            std::istringstream ss(line.substr(line.find(":") + 1));
+            ss >> uploadSpeed;
+        }
+    }
+
+    //Promt command line
+    std::cout << GREEN << "SpeedTest done, Download speed was: " << downloadSpeed << std::endl;
+    std::cout << RESET;
+}
+
 
 //**Run a command in command line
 //**Pre: String command

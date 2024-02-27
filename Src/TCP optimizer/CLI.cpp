@@ -4,25 +4,49 @@
 
 //Colors
 #define RESET   "\033[0m"
-#define RED     "\033[31m"
-#define GREEN   "\033[32m"
-#define YELLOW  "\033[33m"
-#define BLUE    "\033[34m"
+#define RED     "\033[31m" //Errors
+#define GREEN   "\033[32m" //Command outputs
+#define YELLOW  "\033[33m" //Console outputs
+#define BLUE    "\033[34m" 
 #define MAGENTA "\033[35m"
-#define CYAN    "\033[36m"
-#define WHITE   "\033[37m"
+#define CYAN    "\033[36m" //User promts/CLI Options
+#define WHITE   "\033[37m" //CLI Promts
+
+//Borders 
+#define smileyFace1 char (0);
+#define smileyFace2 char (1);
+#define leftArrow char (174);
+#define RightArrow char (175);
+#define SoildBorderThin char (177);
+#define SoildBorderWide char (178);
+#define DoubleLineBorderVertical char (186);
+#define DoubleLineBorderHorizantal char (205);
+#define DoubleLineBorderMiddleEgdeLeft char (185);
+#define DoubleLineBorderMiddleEgdeRight char (204);
+#define DoubleLineBorderTopRight char (187);
+#define DoubleLineBorderBottomRight char (188);
+#define DoubleLineBorderBottomLeft char (200);
+#define DoubleLineBorderTopLeft char (201);
 
 using namespace std;
 
 //**PRINT A BANNER WITH A COLOR
 void printBanner(const string message, const string color) {
-    string bannerCap = "";
-    for (int i = 0; i < message.length() + 2; i++) {
-        bannerCap = bannerCap + "*";
-    }
-    cout << color << bannerCap << "\n";
-    cout << color << "*" << message << "*\n";
-    cout << color << bannerCap << "\n";
+    cout << color << DoubleLineBorderTopLeft;
+    for (int i = 0; i < message.length(); i++) 
+        cout << color << DoubleLineBorderHorizantal;
+    cout << color << DoubleLineBorderTopRight;
+    
+    cout << "\n";
+    cout << color << DoubleLineBorderVertical;
+    cout << message;
+    cout << color << DoubleLineBorderVertical;
+    cout << "\n";
+
+    cout << color << DoubleLineBorderBottomLeft;
+    for (int i = 0; i < message.length(); i++)
+        cout << color << DoubleLineBorderHorizantal;
+    cout << color << DoubleLineBorderBottomRight;
     cout << RESET;
 }
 
@@ -30,25 +54,22 @@ int main() {
     TcpOptimizer optimizer;
 
     //Intro banner
-    printBanner("Welcome to TCP Optimizer CLI!", RED);
-    cout << endl;
-
+    printBanner("Welcome to TCP Optimizer CLI!", MAGENTA);
 
     //MAINLOOP
-    //BREAK STATMENTS ARE TEMP FOR TESTING REMOVE LATER
     while (true) {
-        cout << "\nOptions:\n";
-        cout << WHITE << "1. Run Speed Test\n";
+        cout << MAGENTA << "\nOptions:\n";
+        cout << CYAN << "1. Run Speed Test\n";
         cout << RESET;
-        cout << GREEN << "2. Auto optimize TCP\n";
+        cout << CYAN << "2. Auto optimize TCP\n";
         cout << RESET;
-        cout << YELLOW << "3. Custom edit TCP\n";
+        cout << CYAN << "3. Custom edit TCP\n";
         cout << RESET;
-        cout << MAGENTA << "4. Manage app bandwitdh\n";
+        cout << CYAN << "4. Manage app bandwitdh\n";
         cout << RESET;
         cout << CYAN << "5. Reset TCP Settings to Default\n";
         cout << RESET;
-        cout << BLUE << "6. Load/Create TCP settings back up\n";
+        cout << CYAN << "6. Load/Create TCP settings back up\n";
         cout << RESET;
         cout << RED << "7. Exit\n";
         cout << RESET;
@@ -59,8 +80,11 @@ int main() {
         cin.ignore();
 
         switch (choice) {
+        case 0:
+            cout << "Invalid option! Please try again." << endl;
+            break;
         case 1:
-            optimizer.speedTest();
+            optimizer.speedTestCLI();
             break;
         case 2:
             optimizer.autoTestValues();
@@ -108,6 +132,8 @@ int main() {
             return 0;
         default:
             cout << "Invalid option! Please try again." << endl;
+            cin.ignore();
+            break;
         }
     }
 
