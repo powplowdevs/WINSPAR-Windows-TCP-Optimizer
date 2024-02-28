@@ -12,67 +12,108 @@
 #define CYAN    "\033[36m" //User promts/CLI Options
 #define WHITE   "\033[37m" //CLI Promts
 
-//Borders 
-#define smileyFace1 char (0);
-#define smileyFace2 char (1);
-#define leftArrow char (174);
-#define RightArrow char (175);
-#define SoildBorderThin char (177);
-#define SoildBorderWide char (178);
-#define DoubleLineBorderVertical char (186);
-#define DoubleLineBorderHorizantal char (205);
-#define DoubleLineBorderMiddleEgdeLeft char (185);
-#define DoubleLineBorderMiddleEgdeRight char (204);
-#define DoubleLineBorderTopRight char (187);
-#define DoubleLineBorderBottomRight char (188);
-#define DoubleLineBorderBottomLeft char (200);
-#define DoubleLineBorderTopLeft char (201);
+//Borders
+#define smileyFace1 string(1,char (0));
+#define smileyFace2 string(1,char (1));
+#define leftArrow string(1,char (174));
+#define RightArrow string(1,char (175));
+#define SoildBorderThin string(1,char (177));
+#define SoildBorderWide string(1,char (178));
+#define DoubleLineBorderVertical string(1,char (186));
+#define DoubleLineBorderHorizontal string(1,char (205));
+#define DoubleLineBorderMiddleEgdeLeft string(1,char (185));
+#define DoubleLineBorderMiddleEgdeRight string(1,char (204));
+#define DoubleLineBorderTopRight string(1,char (187));
+#define DoubleLineBorderBottomRight string(1,char (188));
+#define DoubleLineBorderBottomLeft string(1,char (200));
+#define DoubleLineBorderTopLeft string(1,char (201));
+
 
 using namespace std;
 
 //**PRINT A BANNER WITH A COLOR
 void printBanner(const string message, const string color) {
-    cout << color << DoubleLineBorderTopLeft;
-    for (int i = 0; i < message.length(); i++) 
-        cout << color << DoubleLineBorderHorizantal;
-    cout << color << DoubleLineBorderTopRight;
+    string borderTextTop = DoubleLineBorderTopLeft;
+    string borderTextBottom = DoubleLineBorderBottomLeft;
+    for (int i = 0; i < message.length(); i++) {
+        borderTextTop = borderTextTop + DoubleLineBorderHorizontal;
+        borderTextBottom = borderTextBottom + DoubleLineBorderHorizontal;
+    }
+    borderTextTop = borderTextTop + DoubleLineBorderTopRight + "\n";
+    borderTextBottom = "\n" + borderTextBottom + DoubleLineBorderBottomRight + "\n";
     
-    cout << "\n";
+    cout << color << borderTextTop << endl;
     cout << color << DoubleLineBorderVertical;
     cout << message;
     cout << color << DoubleLineBorderVertical;
-    cout << "\n";
+    cout << color << borderTextBottom << endl;
+    cout << color << borderTextTop << endl;
+    cout << color << DoubleLineBorderVertical;
 
-    cout << color << DoubleLineBorderBottomLeft;
-    for (int i = 0; i < message.length(); i++)
-        cout << color << DoubleLineBorderHorizantal;
-    cout << color << DoubleLineBorderBottomRight;
     cout << RESET;
 }
 
 int main() {
     TcpOptimizer optimizer;
 
-    //Intro banner
-    printBanner("Welcome to TCP Optimizer CLI!", MAGENTA);
-
     //MAINLOOP
     while (true) {
-        cout << MAGENTA << "\nOptions:\n";
-        cout << CYAN << "1. Run Speed Test\n";
+        //Intro banner
+        printBanner("Welcome to TCP Optimizer CLI!", WHITE);
+
+        cout << WHITE;
+        cout << RightArrow;
+        cout << " Options:                   ";
+        cout << DoubleLineBorderVertical;
+        cout << "\n";
+        cout << CYAN;
+        cout << DoubleLineBorderVertical;
+        cout << " 1. Run Speed Test           ";
+        cout << DoubleLineBorderVertical;
+        cout << "\n";
         cout << RESET;
-        cout << CYAN << "2. Auto optimize TCP\n";
+        cout << DoubleLineBorderVertical;
+        cout << " 2. Auto optimize TCP        ";
+        cout << DoubleLineBorderVertical;
+        cout << "\n";
+        cout << CYAN;
+        cout << DoubleLineBorderVertical;
+        cout << " 3. Custom edit TCP          ";
+        cout << DoubleLineBorderVertical;
+        cout << "\n";
         cout << RESET;
-        cout << CYAN << "3. Custom edit TCP\n";
+        cout << DoubleLineBorderVertical;
+        cout << " 4. Manage app bandwidth     ";
+        cout << DoubleLineBorderVertical;
+        cout << "\n";
+        cout << CYAN;
+        cout << DoubleLineBorderVertical;
+        cout << " 5. Reset settings to Default";
+        cout << DoubleLineBorderVertical;
+        cout << "\n";
         cout << RESET;
-        cout << CYAN << "4. Manage app bandwitdh\n";
-        cout << RESET;
-        cout << CYAN << "5. Reset TCP Settings to Default\n";
-        cout << RESET;
-        cout << CYAN << "6. Load/Create TCP settings back up\n";
-        cout << RESET;
-        cout << RED << "7. Exit\n";
-        cout << RESET;
+        cout << DoubleLineBorderVertical;
+        cout << " 6. Load/Create TCP backup   ";
+        cout << DoubleLineBorderVertical;
+        cout << "\n";
+        cout << MAGENTA;
+        cout << DoubleLineBorderVertical;
+        cout << " 7. Help                     ";
+        cout << DoubleLineBorderVertical;
+        cout << "\n";
+        cout << RED;
+        cout << DoubleLineBorderVertical;
+        cout << " 8. Exit                     ";
+        cout << DoubleLineBorderVertical;
+        cout << "\n";
+        cout << WHITE;
+        cout << DoubleLineBorderBottomLeft;
+        for (size_t i = 0; i < 29; i++) {
+            cout << DoubleLineBorderHorizontal;
+        }
+        cout << DoubleLineBorderBottomRight;
+        cout << RESET << endl;
+
         cout << "Choose an option: ";
 
         int choice;
@@ -123,12 +164,18 @@ int main() {
             
             default:
                 cout << "Invalid option! Please try again." << endl;
+                break;
             }
             optimizer.manageBandwidthUsage();
             break;
         }
         case 7:
-            cout << "Exiting..." << endl;
+            cout << YELLOW << "Find source code and more help at our github." << YELLOW << "https://github.com/powplowdevs/Capstone-optimizer" << endl;
+            cout << YELLOW << "There is nothing of value there right now idk why I added a \"Help\" option to be honest..." << endl;
+            break;
+        case 8:
+            cout << RED << "Exiting..." << endl;
+            cout << RESET;
             return 0;
         default:
             cout << "Invalid option! Please try again." << endl;
