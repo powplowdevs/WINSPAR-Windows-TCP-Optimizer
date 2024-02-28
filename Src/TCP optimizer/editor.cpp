@@ -17,6 +17,7 @@
 #include <string>
 #include <sstream>
 #include <cstdio>
+#include <fstream>
 #include <chrono>
 #include <thread>
 #include <stdio.h>
@@ -71,7 +72,7 @@ void printBannerEditor(const std::string message, const std::string color) {
 }
 
 //List vars
-std::vector<std::pair<std::string, std::string>> coptimizedApps = {};
+std::vector<std::pair<std::string, std::string>> optimizedApps = {};
 std::vector<std::string> currentQOS = {};
 
 //****This is dependent on the speedtest CLI this should be changed later****
@@ -307,6 +308,36 @@ void TcpOptimizer::setProcessPriorityCLI() {
             std::cin.ignore();
             std::cout << WHITE << "--------------------------------\n\n\n\n\n";
         }
+    }
+}
+
+//**Optimize list of apps
+void TcpOptimizer::setProcessPriorityListCLI() {
+    //Loop list
+    for (const auto& appName : optimizedApps){
+        //Create command
+        std::string command = "wmic process where name=\"" + appName.first + "\" CALL setpriority \"" + appName.first + "\"";
+        //Run command
+        std::string result = runCommand(command);
+    }
+}
+
+//**Save list of optimized 
+void TcpOptimizer::saveOptimizedApps() {
+    //FORMAT name /n name ...
+    std::string line;
+    std::ifstream infile("OPTI_SOA.txt");
+    while (infile >> line) {
+        std::cout << line;
+    }
+}
+//**Load list of optimized 
+void TcpOptimizer::loadOptimizedApps() {
+    //FORMAT name /n name ...
+    std::string line;
+    std::ifstream infile("OPTI_SOA.txt");
+    while (infile >> line) {
+        std::cout << line;
     }
 }
 

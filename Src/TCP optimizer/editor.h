@@ -29,6 +29,9 @@ public:
     std::vector<std::pair<std::string, std::string>> listRunningProcesses(bool printValues);
     void setProcessPriorityCLI();
     bool setProcessPriority(std::string name, std::string value);
+    void setProcessPriorityListCLI();
+    void saveOptimizedApps();
+    void loadOptimizedApps();
     std::vector<std::pair<std::string, std::string>> GetRunningApplications();
     std::pair<std::string, std::string> ChooseApplicationCLI();
     void createQoS(std::string QoS_Name, std::string path, std::string ThrottleRate);

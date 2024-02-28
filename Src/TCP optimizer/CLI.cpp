@@ -114,16 +114,11 @@ int main() {
         cout << DoubleLineBorderBottomRight;
         cout << RESET << endl;
 
-        cout << "Choose an option: ";
-
         int choice;
+        cout << "Choose an option: ";
         cin >> choice;
-        cin.ignore();
 
         switch (choice) {
-        case 0:
-            cout << "Invalid option! Please try again." << endl;
-            break;
         case 1:
             optimizer.speedTestCLI();
             break;
@@ -178,8 +173,9 @@ int main() {
             cout << RESET;
             return 0;
         default:
-            cout << "Invalid option! Please try again." << endl;
+            cin.clear();
             cin.ignore();
+            cout << "Invalid option! Please try again." << endl;
             break;
         }
     }
