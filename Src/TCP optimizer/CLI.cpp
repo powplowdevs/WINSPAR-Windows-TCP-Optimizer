@@ -73,7 +73,7 @@ int main() {
         cout << "\n";
         cout << RESET;
         cout << DoubleLineBorderVertical;
-        cout << " 2. Auto optimize TCP        ";
+        cout << " 2. Auto optimize            ";
         cout << DoubleLineBorderVertical;
         cout << "\n";
         cout << CYAN;
@@ -124,6 +124,7 @@ int main() {
             break;
         case 2:
             optimizer.autoTestValues();
+            optimizer.manageBandwidthUsage();
             break;
         case 3:
             //optimizer.manualTestVal(); //NOT DONE TO DO: <---------

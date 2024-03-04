@@ -72,8 +72,10 @@ void printBannerEditor(const std::string message, const std::string color) {
 }
 
 //List vars
+//                       NAME?         PID     Priority value
 std::vector<std::pair<std::string, std::string>> optimizedApps = {};
-std::vector<std::string> currentQOS = {};
+std::vector<std::string> optimizedAppsPriorityValues = {};
+std::vector<std::string> currentQOS = {}; //NOT REALLY USED
 
 //****This is dependent on the speedtest CLI this should be changed later****
 //**Run command line speed test
@@ -297,6 +299,7 @@ void TcpOptimizer::setProcessPriorityCLI() {
             for (const auto& pair : apps) {
                 if (pair.first == processName) {
                     optimizedApps.push_back(pair);
+                    optimizedAppsPriorityValues.push_back(priorityValue);
                 }
             }
         }
@@ -358,7 +361,8 @@ bool TcpOptimizer::setProcessPriority(std::string name, std::string value) {
     if (!(result.compare("Value map does not contain the input value for this property.") >= 0)) {
         for (const auto& pair : apps) {
             if (pair.first == processName) {
-                optimizedApps.push_back(pair);
+                optimizedApps.push_back(pair)
+                optimizedAppsPriorityValues.push_back(priorityValue);
             }
         }
         return true;
@@ -606,24 +610,26 @@ bool TcpOptimizer::isInVector(const std::string& str, const std::vector<std::str
 //-->also make it remove optimizations after the app is no longer top 10
 void TcpOptimizer::manageBandwidthUsage() {
     //Grab list of apps and their usage
+    //                    PID  IDK??
     std::vector<std::pair<int, SIZE_T>> usage = GetBandwidthUsage();
     bool flip = false;
     int total = 0;
-
-    for (const auto& pair : usage) {
-        for (const auto& Opair : optimizedApps) {
-            //Check if this is a optimzed app
-            if (std::to_string(pair.first) == Opair.second) {
-                flip = true;
+    if (optimizedApps.size() > 0) {
+        for (const auto& pair : usage) {
+            for (const auto& Opair : optimizedApps) {
+                //Check if this is a optimzed app
+                if (std::to_string(pair.first) == Opair.second) {
+                    flip = true;
+                }
+                total = total + static_cast<int>(pair.second);
             }
-            total = total + static_cast<int>(pair.second);
-        }
-        //if its not a optimzed app limit it
-        if (flip == false) {
-            std::string name = extractFileName(FindAppNameByPID(std::to_string(pair.first)) + "-LISTQoS");
-            if (!isInVector(name, currentQOS)) {
-                std::cout << YELLOW << "Creating QoS policy for " << name;
-                createQoS(name, name, "5");//MAYBE EDIT THROLLTE RATE LATER
+            //if its not a optimzed app limit it
+            if (flip == false) {
+                std::string name = extractFileName(FindAppNameByPID(std::to_string(pair.first)) + "-LISTQoS");
+                if (!isInVector(name, currentQOS)) {
+                    std::cout << YELLOW << "Creating QoS policy for " << name;
+                    createQoS(name, name, "5");//MAYBE EDIT THROLLTE RATE LATER
+                }
             }
         }
     }
