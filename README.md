@@ -1,6 +1,6 @@
 # TCP Optimizer
 
-TCP Optimizer or WIN-OPTI (name is work in progess) is a command-line tool designed to optimize TCP settings and download speeds of applications on Windows systems for improved network performance. It provides advanced features for tuning various TCP parameters, managing application bandwidth usage, and conducting network speed tests.
+TCP Optimizer or WIN-OPTI (name is work in progess) is a command-line tool designed to optimize TCP settings and download speeds of applications on Windows systems for improved network performance. It provides features for tuning various TCP parameters, managing application bandwidth usage, and conducting network speed tests.
 
 This project is being developed as a capstone project for 2023-2024, and is still in the works, many of the features listed below are not done or still in progess. For now what is below is a long term goal for the finalized version of this app.
 
