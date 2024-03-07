@@ -43,8 +43,8 @@ A simple to use command-line interface is used to navigate TCP Optimizer, it off
 - **Application Prioritization:** Users can prioritize specific applications to ensure they receive preferential treatment in terms of windows provied CPU time. This feature is particularly useful for ensuring smooth performance in applications such as streaming services.
 
 ## How It Works
+TCP Optimizer relies on the manipulation of Windows registry settings and system APIs to modify TCP parameters. It uses various WinAPI functions for tasks such as, adjusting TCP settings, applying QoS policies utilizeing the [windows QoS](https://learn.microsoft.com/en-us/windows-server/networking/technologies/qos/qos-policy-top), for this reason it needs to be run in administrator mode. 
 
-TCP Optimizer is designed to work optimally when multiple applications are running simultaneously on a Windows system. It is particularly effective in adjusting bandwitdh limiting to prioritize certain applications utilizeing the [windows QoS](https://learn.microsoft.com/en-us/windows-server/networking/technologies/qos/qos-policy-top) sytem to limit apps bandwitdh along with the aplication priority system that windows already has in place.
 ### Benefits:
 
 - **Improved Performance:** Enhances the performance of critical applications by ensuring they receive sufficient network resources, even when the system is under heavy load.
@@ -75,9 +75,9 @@ Once TCP Optimizer is running, you can use the following commands to perform var
 - `6. Help`: View additional information about TCP Optimizer and its commands.
 - `7. Exit`: Close TCP Optimizer and exit the application.
 
-## Configuration
+## Extras
 
-TCP Optimizer relies on the manipulation of Windows registry settings and system APIs to modify TCP parameters. It uses various WinAPI functions for tasks such as querying running processes, adjusting TCP settings, and applying QoS policies. for this reason it need to be run in administrator mode.
+TCP Optimizer relies on the manipulation of Windows registry settings and system APIs to modify TCP parameters. It uses various WinAPI functions for tasks such as querying running processes, adjusting TCP settings, and applying QoS policies. for this reason it need to be run in administrator mode. The Optimizer is designed to work optimally when multiple applications are running simultaneously on a Windows system. It is particularly effective in adjusting bandwitdh limiting to prioritize certain applications 
 
 ## Contributing
 
