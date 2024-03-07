@@ -36,6 +36,7 @@ public:
     std::pair<std::string, std::string> ChooseApplicationCLI();
     void createQoS(std::string QoS_Name, std::string path, std::string ThrottleRate);
     void removeQoS(std::string QoS_Name);
+    void clearQoS();
     std::string FindAppNameByPID(const std::string& pidStr);
     std::vector<std::pair<int, SIZE_T>> GetBandwidthUsage();
     std::string extractFileName(const std::string& path);
@@ -44,6 +45,8 @@ public:
     bool loadBackUp();
     bool createBackUp();
     bool resetTodefault();
+    void saveData();
+    void loadData();
     bool manualTestVal(const std::map<std::string, std::string>& userSettings);
     bool autoTestValues();
 

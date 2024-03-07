@@ -56,6 +56,17 @@ void printBanner(const string message, const string color) {
 int main() {
     TcpOptimizer optimizer;
 
+    //ON BOOT
+    //Read QoS and Priority data
+    optimizer.loadData();
+    //Clear QoS folder
+    optimizer.clearQoS();
+    //Set app priority
+    optimizer.setProcessPriorityListCLI();
+    //Manage bandwitdh
+    optimizer.manageBandwidthUsage();
+    
+
     //MAINLOOP
     while (true) {
         //Intro banner
@@ -170,6 +181,7 @@ int main() {
             cout << YELLOW << "There is nothing of value there right now idk why I added a \"Help\" option to be honest..." << endl;
             break;
         case 8:
+            optimizer.saveData();
             cout << RED << "Exiting..." << endl;
             cout << RESET;
             return 0;
