@@ -265,6 +265,7 @@ std::vector<std::pair<std::string, std::string>> TcpOptimizer::listRunningProces
 //**Edit priority of apps
 //****idle: 64 (or "idle"), below normal : 16384 (or "below normal"), normal : 32 (or "normal"), above normal : 32768 (or "above normal"), high priority : 128 (or "high priority"), real time : 256 (or "realtime")****
 void TcpOptimizer::setProcessPriorityCLI() {
+    std::cin.ignore();
     //Main loop
     while (true) {
         std::cout << WHITE << "--------------------------------\n";
@@ -273,7 +274,7 @@ void TcpOptimizer::setProcessPriorityCLI() {
         std::string processName;
         std::string priorityValue;
         //Promt user
-        std::cout << YELLOW << "Enter the name of the process to set priority for, or EXIT to start TCP optimaztion: ";
+        std::cout << WHITE << "Enter the name of the process to set priority for, or EXIT to start TCP optimaztion: ";
         //Grab user input
         std::getline(std::cin, processName);
             
@@ -283,7 +284,7 @@ void TcpOptimizer::setProcessPriorityCLI() {
         }
 
         //Promt user
-        std::cout << YELLOW << "Enter the priority value (idle, below normal, normal, above normal, high priority, realtime): ";
+        std::cout << WHITE << "Enter the priority value (idle, below normal, normal, above normal, high priority, realtime): ";
         //Grab user input
         std::getline(std::cin, priorityValue);
 
@@ -324,6 +325,8 @@ void TcpOptimizer::setProcessPriorityListCLI() {
     for (const auto& appName : optimizedApps){
         //Create command
         std::string command = "wmic process where name=\"" + appName.first + "\" CALL setpriority \"" + optimizedAppsPriorityValues[index] + "\"";
+        std::cout << command;
+
         //Run command
         std::string result = runCommand(command);
         index++;
@@ -337,29 +340,40 @@ void TcpOptimizer::saveData() {
     //Save optimized apps
     int index = 0;
     //Clear file
-    std::ofstream file("OPTI_SOA.txt", std::ios::trunc);
-    for (const auto& pair : optimizedApps) {
-        file << pair.first << " " << pair.second << " " << optimizedAppsPriorityValues[index] << std::endl;
-        index++;
+    std::ofstream file("./OPTI_SOA.txt", std::ios::trunc);
+    if (!(file.is_open())) {
+        std::cout << RED << "Failed to open OPTI_SOA.txt " << GetLastError() << std::endl;
     }
-    file.close();
-    std::cout << YELLOW << "Saved data successfully."; //Code wirtten by jin!!!!!!!! (only part of this line)
+    else {
+        for (const auto& pair : optimizedApps) {
+            file << pair.first << " " << pair.second << " " << optimizedAppsPriorityValues[index] << std::endl;
+            index++;
+        }
+        file.close();
+
+        std::cout << GREEN << "Saved optimized apps data successfully.\n"; //Code wirtten by jin!!!!!!!! (only part of this line)
+    }
 
     //Save QoS policys
     //Clear file
-    std::ofstream file2("OPTI_QoS.txt", std::ios::trunc);
-    for (const auto& str : currentQOS) {
-        file2 << str << std::endl;
+    std::ofstream file2("./OPTI_QoS.txt", std::ios::trunc);
+    if (!(file2.is_open())) {
+        std::cout << RED << "Failed to open OPTI_QoS.txt " << GetLastError() << std::endl;
     }
-    file2.close();
-    std::cout << YELLOW << "Saved data successfully."; //Code wirtten by jin!!!!!!!! (only part of this line)
+    else {
+        for (const auto& str : currentQOS) {
+            file2 << str << std::endl;
+        }
+        file2.close();
 
+        std::cout << GREEN << "Saved QoS data successfully.\n"; //Code wirtten by jin!!!!!!!! (only part of this line)
+    }
 }
 //**Load list of optimized 
 void TcpOptimizer::loadData() {
     //FORMAT name /n name ...
     //Load optimized apps
-    std::ifstream file1("OPTI_SOA.txt");
+    std::ifstream file1("./OPTI_SOA.txt");
     if (file1.is_open()) {
         optimizedApps.clear();
         optimizedAppsPriorityValues.clear();
@@ -369,14 +383,14 @@ void TcpOptimizer::loadData() {
             optimizedAppsPriorityValues.push_back(priority);
         }
         file1.close();
-        std::cout << YELLOW << "Loaded optimized apps successfully." << std::endl;
+        std::cout << GREEN << "Loaded optimized apps successfully." << std::endl;
     }
     else {
         std::cout << RED << "Failed to open OPTI_SOA.txt" << std::endl;
     }
 
     //Load QoS policies
-    std::ifstream file2("OPTI_QoS.txt");
+    std::ifstream file2("./OPTI_QoS.txt");
     if (file2.is_open()) {
         currentQOS.clear();
         std::string qos;
@@ -384,7 +398,7 @@ void TcpOptimizer::loadData() {
             currentQOS.push_back(qos);
         }
         file2.close();
-        std::cout << YELLOW << "Loaded QoS policies successfully." << std::endl;
+        std::cout << GREEN << "Loaded QoS policies successfully." << std::endl;
     }
     else {
         std::cout << RED << "Failed to open OPTI_QoS.txt" << std::endl;
@@ -541,22 +555,15 @@ void TcpOptimizer::removeQoS(std::string QoS_Name) {
 //**Pre: String QoS policty name
 void TcpOptimizer::clearQoS() {
     //Build commands to run
-    std::list<std::string> commandList;
+    std::string command = "reg delete HKEY_CURRENT_USER\\Software\\Policies\\Microsoft\\Windows\\QoS";
+    std::string command2 = "gpupdate /force";
 
-    for (const auto& name : currentQOS){
-        commandList.push_back("reg delete HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + name + " /f");
-    }
-    commandList.push_back("gpupdate /force");
+    system(command.c_str());
+    system(command2.c_str());
 
-    //Edit registry and remove QoS
-    for (const std::string& command : commandList) {
-        std::cout << command << std::endl;
-        system(command.c_str());
-    }
-
+    std::cout << GREEN << "Succesfully cleard QoS policys" << std::endl;
     currentQOS.clear();
 }
-
 
 //**Find an aplication path with its PID
 //**Pre: String application PID
@@ -637,12 +644,12 @@ std::vector<std::pair<int, SIZE_T>> TcpOptimizer::GetBandwidthUsage() {
         return a.second > b.second;
     });
 
-    int index = 15;
+    int index = 30;
     while (true)
     {
         try
         {
-            sortedProcessVector.erase(sortedProcessVector.begin() + 10, sortedProcessVector.end());
+            sortedProcessVector.erase(sortedProcessVector.begin() + 30, sortedProcessVector.end());
             break;
         }
         catch (const std::exception&)
@@ -651,7 +658,7 @@ std::vector<std::pair<int, SIZE_T>> TcpOptimizer::GetBandwidthUsage() {
             if (index <= 0) {
                 return sortedProcessVector;
             }
-            continue;
+            continue;   
         }
     }
         
@@ -933,7 +940,7 @@ bool TcpOptimizer::autoTestValues() {
 
     }
 
-    std::cout << GREEN << "Auto value optimization complete!";
+    std::cout << GREEN << "Auto value optimization complete!" << std::endl;
     std::cout << RESET;
     return true;
 }

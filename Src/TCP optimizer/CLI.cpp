@@ -58,13 +58,13 @@ int main() {
 
     //ON BOOT
     //Read QoS and Priority data
-    optimizer.loadData();
-    //Clear QoS folder
-    optimizer.clearQoS();
-    //Set app priority
-    optimizer.setProcessPriorityListCLI();
-    //Manage bandwitdh
-    optimizer.manageBandwidthUsage();
+    //optimizer.loadData();
+    ////Clear QoS folder
+    //optimizer.clearQoS();
+    //////Set app priority
+    //optimizer.setProcessPriorityListCLI();
+    //////Manage bandwitdh
+    //optimizer.manageBandwidthUsage();
     
 
     //MAINLOOP
@@ -134,8 +134,9 @@ int main() {
             optimizer.speedTestCLI();
             break;
         case 2:
-            optimizer.autoTestValues();
-            optimizer.manageBandwidthUsage();
+            optimizer.setProcessPriorityCLI();
+            //optimizer.autoTestValues();
+            //optimizer.manageBandwidthUsage();
             break;
         case 3:
             //optimizer.manualTestVal(); //NOT DONE TO DO: <---------
