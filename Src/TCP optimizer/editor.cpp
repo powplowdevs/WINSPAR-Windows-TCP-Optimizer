@@ -27,14 +27,21 @@
 #include "editor.h"
 
 //Colors
-#define RESET   "\033[0m"
-#define RED     "\033[31m" //Errors
-#define GREEN   "\033[32m" //Command outputs
-#define YELLOW  "\033[33m" //Console outputs
-#define BLUE    "\033[34m" 
-#define MAGENTA "\033[35m"
-#define CYAN    "\033[36m" //User promts/CLI Options
-#define WHITE   "\033[37m" //CLI Promts
+#define RESET   7
+#define RED     12 //Errors
+#define GREEN   10 //Command outputs
+#define YELLOW  14 //Console outputs
+#define BLUE    9
+#define MAGENTA 13
+#define CYAN    11 //User promts/CLI Options
+#define WHITE   15 //CLI Promts
+
+
+//Set editor console text color
+void TcpOptimizer::ESC(int color) {
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hConsole, color);
+}
 
 //Borders
 #define smileyFace1 std::string(1,char (0));
@@ -53,7 +60,7 @@
 #define DoubleLineBorderTopLeft std::string(1,char (201));
 
 //**PRINT A BANNER WITH A COLOR
-void printBannerEditor(const std::string message, const std::string color) {
+void TcpOptimizer::printBannerEditor(const std::string message, const int color) {
     std::string borderTextTop = DoubleLineBorderTopLeft;
     std::string borderTextBottom = DoubleLineBorderBottomLeft;
     for (int i = 0; i < message.length(); i++) {
@@ -62,14 +69,16 @@ void printBannerEditor(const std::string message, const std::string color) {
     }
     borderTextTop = borderTextTop + DoubleLineBorderTopRight + "\n";
     borderTextBottom = "\n" + borderTextBottom + DoubleLineBorderBottomRight + "\n";
-
-    std::cout << color << borderTextTop << std::endl;
-    std::cout << color << DoubleLineBorderVertical;
+    
+    ESC(color);
+       
+    std::cout << borderTextTop << std::endl;
+    std::cout << DoubleLineBorderVertical;
     std::cout << message;
-    std::cout << color << DoubleLineBorderVertical;
-    std::cout << color << borderTextBottom << std::endl;
+    std::cout << DoubleLineBorderVertical;
+    std::cout << borderTextBottom << std::endl;
 
-    std::cout << RESET;
+    ESC(color);
 }
 
 //List vars
@@ -85,13 +94,14 @@ std::vector<std::string> currentQOS = {};
 //**Post: Double of sum of download and upload speed
 double TcpOptimizer::speedTest() {
     //Prompt command line
-    std::cout << YELLOW << "Running SpeedTest... " << std::endl;
+    ESC(YELLOW);
+    std::cout << "Running SpeedTest... " << std::endl;
         
     //Open pipe to run command and read command
     FILE* pipe = popen("speedtest", "r");
     if (!pipe) {
-        std::cout << RED << "popen() failed!" << std::endl;
-            
+        ESC(RED);
+        std::cout << "popen() failed!" << std::endl;
         return 1;
     }
 
@@ -127,7 +137,8 @@ double TcpOptimizer::speedTest() {
     }
 
     //Promt command line
-    std::cout << GREEN << "SpeedTest done, (Speed upload+download) was: " << downloadSpeed + uploadSpeed << std::endl;
+    ESC(GREEN);
+    std::cout << "SpeedTest done, (Speed upload+download) was: " << downloadSpeed + uploadSpeed << std::endl;
 
     return downloadSpeed+uploadSpeed;
 }
@@ -136,13 +147,15 @@ double TcpOptimizer::speedTest() {
 //**Run command line speed test with good looking outputs for user
 void TcpOptimizer::speedTestCLI() {
     //Prompt command 
-    std::cout << YELLOW << "Running SpeedTest... " << std::endl;
-    std::cout << RESET;
+    ESC(YELLOW);
+    std::cout << "Running SpeedTest... " << std::endl;
+    ESC(RESET);
 
     //Open pipe to run command and read command
     FILE* pipe = popen("speedtest", "r");
     if (!pipe) {
-        std::cout << RED << "popen() failed!" << std::endl;
+        ESC(RED);
+        std::cout << "popen() failed!" << std::endl;
     }
 
     //Buffer to store the command output
@@ -178,8 +191,9 @@ void TcpOptimizer::speedTestCLI() {
     }
 
     //Promt command line
-    std::cout << GREEN << "SpeedTest done, Download speed was: " << downloadSpeed << std::endl;
-    std::cout << RESET;
+    ESC(GREEN);
+    std::cout << "SpeedTest done, Download speed was: " << downloadSpeed << std::endl;
+    ESC(RESET);
 }
 
 //**Run a command in command line
@@ -191,7 +205,8 @@ std::string TcpOptimizer::runCommand(const std::string& command) {
     FILE* pipe = _popen((command + " 2>&1").c_str(), "r");
     //Code that makes more sense ↓↓↓
     if (!pipe) {
-        std::cout << RED << "Failed to open pipe for command: " << command << std::endl;
+        ESC(RED);
+        std::cout << "Failed to open pipe for command: " << command << std::endl;
         return "----COMMAND_FAIL----";
     }
 
@@ -207,7 +222,8 @@ std::string TcpOptimizer::runCommand(const std::string& command) {
     int returnCode = _pclose(pipe);
 
     if (returnCode != 0) {
-        std::cout << RED << "Command failed with return code: " << returnCode << std::endl;
+        ESC(RED);
+        std::cout << "Command failed with return code: " << returnCode << std::endl;
     }
 
     return result;
@@ -255,7 +271,8 @@ std::vector<std::pair<std::string, std::string>> TcpOptimizer::listRunningProces
     //Display processes
     if (printValues) {
         for (const auto& process : uniqueProcesses) {
-            std::cout << BLUE << process << std::endl;
+            ESC(BLUE);
+            std::cout << process << std::endl;
         }
     }
 
@@ -268,13 +285,15 @@ void TcpOptimizer::setProcessPriorityCLI() {
     std::cin.ignore();
     //Main loop
     while (true) {
-        std::cout << WHITE << "--------------------------------\n";
+        ESC(WHITE);
+        std::cout << "--------------------------------\n";
         std::vector<std::pair<std::string, std::string>> apps = listRunningProcesses(true);
 
         std::string processName;
         std::string priorityValue;
         //Promt user
-        std::cout << WHITE << "Enter the name of the process to set priority for, or EXIT to start TCP optimaztion: ";
+        ESC(WHITE);
+        std::cout << "Enter the name of the process to set priority for, or EXIT to start TCP optimaztion: ";
         //Grab user input
         std::getline(std::cin, processName);
             
@@ -284,7 +303,8 @@ void TcpOptimizer::setProcessPriorityCLI() {
         }
 
         //Promt user
-        std::cout << WHITE << "Enter the priority value (idle, below normal, normal, above normal, high priority, realtime): ";
+        ESC(WHITE);
+        std::cout << "Enter the priority value (idle, below normal, normal, above normal, high priority, realtime): ";
         //Grab user input
         std::getline(std::cin, priorityValue);
 
@@ -296,10 +316,13 @@ void TcpOptimizer::setProcessPriorityCLI() {
         //Handle error or success
         //Success
         if (!(result.compare("Value map does not contain the input value for this property.") >= 0)) {
-            std::cout << GREEN << "Priority command executed successfully." << std::endl;
-            std::cout << YELLOW << "Press Enter to continue...";
+            ESC(GREEN);
+            std::cout << "Priority command executed successfully." << std::endl;
+            ESC(YELLOW);
+            std::cout << "Press Enter to continue...";
             std::cin.ignore();
-            std::cout << WHITE << "--------------------------------\n|                               |\n|                               |\n|                               |\n|                               |\n";
+            ESC(WHITE);
+            std::cout  << "--------------------------------\n|                               |\n|                               |\n|                               |\n|                               |\n";
             for (const auto& pair : apps) {
                 if (pair.first == processName) {
                     optimizedApps.push_back(pair);
@@ -309,11 +332,14 @@ void TcpOptimizer::setProcessPriorityCLI() {
         }
         //Error
         else {
-            std::cout << RED << "Error executing priority command." << std::endl;
-            std::cout << RED << "Hint: make sure you enter your aplication name and priority value are EXACTLY as seen in the lists ie: cmd.exe and normal" << std::endl;
-            std::cout << YELLOW << "Press Enter to continue...";
+            ESC(RED);
+            std::cout << "Error executing priority command." << std::endl;
+            std::cout << "Hint: make sure you enter your aplication name and priority value are EXACTLY as seen in the lists ie: cmd.exe and normal" << std::endl;
+            ESC(YELLOW);
+            std::cout << "Press Enter to continue...";
             std::cin.ignore();
-            std::cout << WHITE << "--------------------------------\n\n\n\n\n";
+            ESC(WHITE);
+            std::cout << "--------------------------------\n\n\n\n\n";
         }
     }
 }
@@ -342,7 +368,8 @@ void TcpOptimizer::saveData() {
     //Clear file
     std::ofstream file("./OPTI_SOA.txt", std::ios::trunc);
     if (!(file.is_open())) {
-        std::cout << RED << "Failed to open OPTI_SOA.txt " << GetLastError() << std::endl;
+        ESC(RED);
+        std::cout << "Failed to open OPTI_SOA.txt " << GetLastError() << std::endl;
     }
     else {
         for (const auto& pair : optimizedApps) {
@@ -351,14 +378,16 @@ void TcpOptimizer::saveData() {
         }
         file.close();
 
-        std::cout << GREEN << "Saved optimized apps data successfully.\n"; //Code wirtten by jin!!!!!!!! (only part of this line)
+        ESC(GREEN);
+        std::cout << "Saved optimized apps data successfully.\n"; //Code wirtten by jin!!!!!!!! (only part of this line)
     }
 
     //Save QoS policys
     //Clear file
     std::ofstream file2("./OPTI_QoS.txt", std::ios::trunc);
     if (!(file2.is_open())) {
-        std::cout << RED << "Failed to open OPTI_QoS.txt " << GetLastError() << std::endl;
+        ESC(RED);
+        std::cout << "Failed to open OPTI_QoS.txt " << GetLastError() << std::endl;
     }
     else {
         for (const auto& str : currentQOS) {
@@ -366,7 +395,8 @@ void TcpOptimizer::saveData() {
         }
         file2.close();
 
-        std::cout << GREEN << "Saved QoS data successfully.\n"; //Code wirtten by jin!!!!!!!! (only part of this line)
+        ESC(GREEN);
+        std::cout << "Saved QoS data successfully.\n"; //Code wirtten by jin!!!!!!!! (only part of this line)
     }
 }
 //**Load list of optimized 
@@ -383,10 +413,12 @@ void TcpOptimizer::loadData() {
             optimizedAppsPriorityValues.push_back(priority);
         }
         file1.close();
-        std::cout << GREEN << "Loaded optimized apps successfully." << std::endl;
+        ESC(GREEN);
+        std::cout << "Loaded optimized apps successfully." << std::endl;
     }
     else {
-        std::cout << RED << "Failed to open OPTI_SOA.txt" << std::endl;
+        ESC(GREEN);
+        std::cout << "Failed to open OPTI_SOA.txt" << std::endl;
     }
 
     //Load QoS policies
@@ -398,10 +430,12 @@ void TcpOptimizer::loadData() {
             currentQOS.push_back(qos);
         }
         file2.close();
-        std::cout << GREEN << "Loaded QoS policies successfully." << std::endl;
+        ESC(GREEN);
+        std::cout << "Loaded QoS policies successfully." << std::endl;
     }
     else {
-        std::cout << RED << "Failed to open OPTI_QoS.txt" << std::endl;
+        ESC(RED);
+        std::cout << "Failed to open OPTI_QoS.txt" << std::endl;
     }
 }
    
@@ -524,12 +558,14 @@ void TcpOptimizer::createQoS(std::string QoS_Name, std::string path, std::string
 
     //Edit registry and add QoS
     for (const std::string& command : commandList) {
-        std::cout << YELLOW << command << std::endl;
+        ESC(YELLOW);
+        std::cout << command << std::endl;
         runCommand(command.c_str());
     }
 
     currentQOS.push_back(QoS_Name);
-    std::cout << GREEN << "Done!\n";
+    ESC(GREEN);
+    std::cout << "Done!\n";
 }
 
 //**Remove custom QoS policy
@@ -561,7 +597,8 @@ void TcpOptimizer::clearQoS() {
     system(command.c_str());
     system(command2.c_str());
 
-    std::cout << GREEN << "Succesfully cleard QoS policys" << std::endl;
+    ESC(GREEN);
+    std::cout << "Succesfully cleard QoS policys" << std::endl;
     currentQOS.clear();
 }
 
@@ -575,11 +612,13 @@ std::string TcpOptimizer::FindAppNameByPID(const std::string& pidStr) {
         pid = std::stoul(pidStr);
     }
     catch (const std::invalid_argument& e) {
-        std::cerr << "Invalid argument: " << e.what() << std::endl;
+        ESC(RED);
+        std::cout << "Invalid argument: " << e.what() << std::endl;
         return "";
     }
     catch (const std::out_of_range& e) {
-        std::cerr << "Out of range: " << e.what() << std::endl;
+        ESC(RED);
+        std::cout << "Out of range: " << e.what() << std::endl;
         return "";
     }
 
@@ -634,6 +673,7 @@ std::vector<std::pair<int, SIZE_T>> TcpOptimizer::GetBandwidthUsage() {
         }
     }
     else {
+        ESC(RED);
         std::cout << "Failed to enumerate processes. Error code: " << GetLastError() << std::endl;
     }
 
@@ -703,7 +743,8 @@ void TcpOptimizer::manageBandwidthUsage() {
             if (flip == false) {
                 std::string name = extractFileName(FindAppNameByPID(std::to_string(pair.first)) + "-LISTQoS");
                 if (!isInVector(name, currentQOS)) {
-                    std::cout << YELLOW << "Creating QoS policy for " << name;
+                    ESC(YELLOW);
+                    std::cout << "Creating QoS policy for " << name;
                     createQoS(name, name, "5");//MAYBE EDIT THROLLTE RATE LATER
                 }
             }
@@ -724,26 +765,32 @@ bool TcpOptimizer::createBackUp() {
 //**Post: Bool true no matter what
 bool TcpOptimizer::resetTodefault() {
     editTcpWindowAutoTuning("normal");
-    std::cout << YELLOW << std::endl;
+    ESC(YELLOW);
+    std::cout << std::endl;
 
     editWindowsScalingHeuristics("default");
-    std::cout << YELLOW << std::endl;
+    ESC(YELLOW);
+    std::cout << std::endl;
 
     editCongestionControlProvider("default");
-    std::cout << YELLOW << std::endl;
+    ESC(YELLOW);
+    std::cout << std::endl;
 
     editReceiveSideScaling("enabled");
-    std::cout << YELLOW << std::endl;
+    ESC(YELLOW);
+    std::cout << std::endl;;
 
     editSegmentCoalescing("enabled");
-    std::cout << YELLOW << std::endl;
+    ESC(YELLOW);
+    std::cout << std::endl;
 
     editEcnCapability("default");
-    std::cout << YELLOW  << std::endl;
+    ESC(YELLOW);
+    std::cout << std::endl;
 
-    std::cout << RESET;
-    std::cout << GREEN << "Done!" << "\n";
-    std::cout << RESET;
+    ESC(GREEN);
+    std::cout << "Done!" << "\n";
+    ESC(RESET);
 
     // editChecksumOffloading("enabled");
     // editTcpChimneyOffload("default");
@@ -819,7 +866,8 @@ bool TcpOptimizer::autoTestValues() {
         for (const auto& value : pair.second) {
             if (pair.first == "TCPWindowAutoTuning") {
                 //SET VALUE
-                std::cout << YELLOW << "Running TCP-Window-Auto-Tuning with: " << value << std::endl;
+                ESC(YELLOW);
+                std::cout << "Running TCP-Window-Auto-Tuning with: " << value << std::endl;
 
                 editTcpWindowAutoTuning(value);
                 //run speed test
@@ -832,7 +880,8 @@ bool TcpOptimizer::autoTestValues() {
             }
             if (pair.first == "WindowsScalingHeuristics") {
                 //SET VALUE
-                std::cout << YELLOW << "Running WindowsScalingHeuristics with: " << value << std::endl;
+                ESC(YELLOW);
+                std::cout << "Running WindowsScalingHeuristics with: " << value << std::endl;
 
                 editWindowsScalingHeuristics(value);
                 //run speed test
@@ -846,7 +895,8 @@ bool TcpOptimizer::autoTestValues() {
             if (pair.first == "CongestionControlProvider") {
 
                 //SET VALUE
-                std::cout << YELLOW << "Running CongestionControlProvider with: " << value << std::endl;
+                ESC(YELLOW);
+                std::cout << "Running CongestionControlProvider with: " << value << std::endl;
 
                 editCongestionControlProvider(value);
                 //run speed test
@@ -860,7 +910,8 @@ bool TcpOptimizer::autoTestValues() {
             if (pair.first == "Receive-sideScaling") {
 
                 //SET VALUE
-                std::cout << YELLOW << "Running Receive-sideScaling with: " << value << std::endl;
+                ESC(YELLOW);
+                std::cout << "Running Receive-sideScaling with: " << value << std::endl;
 
                 editReceiveSideScaling(value);
                 //run speed test
@@ -874,7 +925,8 @@ bool TcpOptimizer::autoTestValues() {
             if (pair.first == "SegmentCoalescing") {
 
                 //SET VALUE
-                std::cout << YELLOW << "Running SegmentCoalescing with: " << value << std::endl;
+                ESC(YELLOW);
+                std::cout << "Running SegmentCoalescing with: " << value << std::endl;
 
                 editSegmentCoalescing(value);
                 //run speed test
@@ -888,7 +940,8 @@ bool TcpOptimizer::autoTestValues() {
             if (pair.first == "ECNcapability") {
 
                 //SET VALUE
-                std::cout << YELLOW << "Running ECNcapability with: " << value << std::endl;
+                ESC(YELLOW);
+                std::cout << "Running ECNcapability with: " << value << std::endl;
 
                 editEcnCapability(value);
                 //run speed test
@@ -940,8 +993,9 @@ bool TcpOptimizer::autoTestValues() {
 
     }
 
-    std::cout << GREEN << "Auto value optimization complete!" << std::endl;
-    std::cout << RESET;
+    ESC(GREEN);
+    std::cout << "Auto value optimization complete!" << std::endl;
+    ESC(RESET);
     return true;
 }
 
@@ -953,9 +1007,11 @@ void TcpOptimizer::editTcpConnectionSpeed(int speed) {
     int result = std::system(command.c_str());
 
     if (result == 0) {
-        std::cout << GREEN << "TCP connection speed edited successfully." << std::endl;
+        ESC(GREEN);
+        std::cout << "TCP connection speed edited successfully." << std::endl;
     } else {
-        std::cout << RED << "Error editing TCP connection speed." << std::endl;
+        ESC(RED);
+        std::cout << "Error editing TCP connection speed." << std::endl;
             
     }
 }
@@ -966,9 +1022,11 @@ void TcpOptimizer::editTcpWindowAutoTuning(std::string tuningOption) { // Global
     int result = std::system(command.c_str());
 
     if (result == 0) {
-        std::cout << GREEN << "TCP window auto tuning edited successfully." << std::endl;
+        ESC(GREEN);
+        std::cout << "TCP window auto tuning edited successfully." << std::endl;
     } else {
-        std::cout << RED << "Error editing TCP window auto tuning." << std::endl;
+        ESC(RED);
+        std::cout << "Error editing TCP window auto tuning." << std::endl;
     }
 }
 
@@ -978,9 +1036,11 @@ void TcpOptimizer::editWindowsScalingHeuristics(std::string scalingOption) { // 
     int result = std::system(command.c_str());
 
     if (result == 0) {
-        std::cout << GREEN << "Windows scaling heuristics edited successfully." << std::endl;
+        ESC(GREEN);
+        std::cout << "Windows scaling heuristics edited successfully." << std::endl;
     } else {
-        std::cout << RED << "Error editing Windows scaling heuristics." << std::endl;
+        ESC(RED);
+        std::cout << "Error editing Windows scaling heuristics." << std::endl;
     }
 }
 
@@ -990,9 +1050,11 @@ void TcpOptimizer::editCongestionControlProvider(std::string providerOption) { /
     int result = std::system(command.c_str());
 
     if (result == 0) {
-        std::cout << GREEN << "Congestion control provider edited successfully." << std::endl;
+        ESC(GREEN);
+        std::cout << "Congestion control provider edited successfully." << std::endl;
     } else {
-        std::cout << RED << "Error editing congestion control provider." << std::endl;
+        ESC(RED);
+        std::cout << "Error editing congestion control provider." << std::endl;
     }
 }
 
@@ -1002,9 +1064,11 @@ void TcpOptimizer::editReceiveSideScaling(std::string rssOption) { // Global var
     int result = std::system(command.c_str());
 
     if (result == 0) {
-        std::cout << GREEN << "Receive-side scaling edited successfully." << std::endl;
+        ESC(GREEN);
+        std::cout << "Receive-side scaling edited successfully." << std::endl;
     } else {
-        std::cout << RED << "Error editing Receive-side scaling."  << std::endl;
+        ESC(RED);
+        std::cout << "Error editing Receive-side scaling."  << std::endl;
     }
 }
 
@@ -1014,9 +1078,11 @@ void TcpOptimizer::editSegmentCoalescing(std::string rscOption) { // Global var
     int result = std::system(command.c_str());
 
     if (result == 0) {
-        std::cout << GREEN << "Segment coalescing edited successfully." << std::endl;
+        ESC(GREEN);
+        std::cout << "Segment coalescing edited successfully." << std::endl;
     } else {
-        std::cout << RED << "Error editing segment coalescing." << std::endl;
+        ESC(RED);
+        std::cout << "Error editing segment coalescing." << std::endl;
     }
 }
 
@@ -1028,9 +1094,11 @@ void TcpOptimizer::editEcnCapability(std::string ecnOption) { // Global var
     int result = std::system(command.c_str());
         
     if (result == 0) {
-        std::cout << GREEN << "ECN capability edited successfully." << std::endl;
+        ESC(GREEN);
+        std::cout << "ECN capability edited successfully." << std::endl;
     } else {
-        std::cout << RED << "Error editing ECN capability." << std::endl;
+        ESC(RED);
+        std::cout << "Error editing ECN capability." << std::endl;
     }
 }
 

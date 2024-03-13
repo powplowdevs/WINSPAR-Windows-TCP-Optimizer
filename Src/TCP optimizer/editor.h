@@ -22,6 +22,8 @@ public:
     std::vector<std::pair<std::string, std::string>> optimizedApps;
     std::vector<std::string> currentQOS;
 
+    void ESC(int color);
+    void printBannerEditor(const std::string message, const int color);
     double speedTest();
     void speedTestCLI();
     std::string runCommand(const std::string& command);

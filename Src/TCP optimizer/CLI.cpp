@@ -3,14 +3,14 @@
 #include "editor.h"
 
 //Colors
-#define RESET   "\033[0m"
-#define RED     "\033[31m" //Errors
-#define GREEN   "\033[32m" //Command outputs
-#define YELLOW  "\033[33m" //Console outputs
-#define BLUE    "\033[34m" 
-#define MAGENTA "\033[35m"
-#define CYAN    "\033[36m" //User promts/CLI Options
-#define WHITE   "\033[37m" //CLI Promts
+#define RESET   7
+#define RED     12 //Errors
+#define GREEN   10 //Command outputs
+#define YELLOW  14 //Console outputs
+#define BLUE    9
+#define MAGENTA 13
+#define CYAN    11 //User promts/CLI Options
+#define WHITE   15 //CLI Promts
 
 //Borders
 #define smileyFace1 string(1,char (0));
@@ -31,8 +31,14 @@
 
 using namespace std;
 
+//Set console text color
+void SC(int color) {
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hConsole, color);
+}
+
 //**PRINT A BANNER WITH A COLOR
-void printBanner(const string message, const string color) {
+void printBanner(const string message, const int color) {
     string borderTextTop = DoubleLineBorderTopLeft;
     string borderTextBottom = DoubleLineBorderBottomLeft;
     for (int i = 0; i < message.length(); i++) {
@@ -41,16 +47,16 @@ void printBanner(const string message, const string color) {
     }
     borderTextTop = borderTextTop + DoubleLineBorderTopRight + "\n";
     borderTextBottom = "\n" + borderTextBottom + DoubleLineBorderBottomRight + "\n";
-    
-    cout << color << borderTextTop << endl;
-    cout << color << DoubleLineBorderVertical;
+    SC(color);
+    cout << borderTextTop << endl;
+    cout << DoubleLineBorderVertical;
     cout << message;
-    cout << color << DoubleLineBorderVertical;
-    cout << color << borderTextBottom << endl;
-    cout << color << borderTextTop << endl;
-    cout << color << DoubleLineBorderVertical;
+    cout << DoubleLineBorderVertical;
+    cout << borderTextBottom << endl;
+    cout << borderTextTop << endl;
+    cout << DoubleLineBorderVertical;
 
-    cout << RESET;
+    SC(RESET);;
 }
 
 int main() {
@@ -58,13 +64,13 @@ int main() {
 
     //ON BOOT
     //Read QoS and Priority data
-    //optimizer.loadData();
-    ////Clear QoS folder
-    //optimizer.clearQoS();
-    //////Set app priority
-    //optimizer.setProcessPriorityListCLI();
-    //////Manage bandwitdh
-    //optimizer.manageBandwidthUsage();
+    optimizer.loadData();
+    //Clear QoS folder
+    optimizer.clearQoS();
+    ////Set app priority
+    optimizer.setProcessPriorityListCLI();
+    ////Manage bandwitdh
+    optimizer.manageBandwidthUsage();
     
 
     //MAINLOOP
@@ -72,58 +78,59 @@ int main() {
         //Intro banner
         printBanner("Welcome to TCP Optimizer CLI!", WHITE);
 
-        cout << WHITE;
+        SC(WHITE);
         cout << RightArrow;
         cout << " Options:                   ";
         cout << DoubleLineBorderVertical;
         cout << "\n";
-        cout << CYAN;
+        SC(CYAN);
         cout << DoubleLineBorderVertical;
         cout << " 1. Run Speed Test           ";
         cout << DoubleLineBorderVertical;
         cout << "\n";
-        cout << RESET;
+        SC(RESET);
         cout << DoubleLineBorderVertical;
         cout << " 2. Auto optimize            ";
         cout << DoubleLineBorderVertical;
         cout << "\n";
-        cout << CYAN;
+        SC(CYAN);
         cout << DoubleLineBorderVertical;
         cout << " 3. Custom edit TCP          ";
         cout << DoubleLineBorderVertical;
         cout << "\n";
-        cout << RESET;
+        SC(RESET);
         cout << DoubleLineBorderVertical;
         cout << " 4. Manage app bandwidth     ";
         cout << DoubleLineBorderVertical;
         cout << "\n";
-        cout << CYAN;
+        SC(CYAN);
         cout << DoubleLineBorderVertical;
         cout << " 5. Reset settings to Default";
         cout << DoubleLineBorderVertical;
         cout << "\n";
-        cout << RESET;
+        SC(RESET);;
         cout << DoubleLineBorderVertical;
         cout << " 6. Load/Create TCP backup   ";
         cout << DoubleLineBorderVertical;
         cout << "\n";
-        cout << MAGENTA;
+        SC(MAGENTA);
         cout << DoubleLineBorderVertical;
         cout << " 7. Help                     ";
         cout << DoubleLineBorderVertical;
         cout << "\n";
-        cout << RED;
+        SC(RED);
         cout << DoubleLineBorderVertical;
         cout << " 8. Exit                     ";
         cout << DoubleLineBorderVertical;
         cout << "\n";
-        cout << WHITE;
+        SC(WHITE);
         cout << DoubleLineBorderBottomLeft;
         for (size_t i = 0; i < 29; i++) {
             cout << DoubleLineBorderHorizontal;
         }
         cout << DoubleLineBorderBottomRight;
-        cout << RESET << endl;
+        cout << endl;
+        SC(RESET);;
 
         int choice;
         cout << "Choose an option: ";
@@ -134,13 +141,12 @@ int main() {
             optimizer.speedTestCLI();
             break;
         case 2:
-            optimizer.setProcessPriorityCLI();
-            //optimizer.autoTestValues();
-            //optimizer.manageBandwidthUsage();
+            optimizer.autoTestValues();
+            optimizer.manageBandwidthUsage();
             break;
         case 3:
             //optimizer.manualTestVal(); //NOT DONE TO DO: <---------
-            cout << "THIS IS NOT DONE YET DO THIS!";
+            cout << "THIS IS NOT DONE YET DO THIS!" << endl;
             break;
         case 4:
             optimizer.manageBandwidthUsage();
@@ -150,46 +156,51 @@ int main() {
             break;
         }
         case 6: {
-            printBanner("Load/Create TCP settings backup", RED);
+            printBanner("Load/Create TCP settings backup", WHITE);
+            SC(WHITE);
             cout << endl;
+
+            cout << "\nOptions:\n";
+            cout << "1. Load backup\n";
+            cout << "2. Create Backup\n";
             cout << "Choose an option: ";
             int choice2;
-            cin >> choice2;
             cin.ignore();
-            cout << "\nOptions:\n";
-            cout << WHITE << "1. Load backup\n";
-            cout << RESET;
-            cout << GREEN << "2. Create Backup\n";
+            cin >> choice2;
 
-            switch (choice)
+            switch (choice2)
             {
-            case 1:
-                optimizer.loadBackUp(); //NOT DONE TO DO: <---------
-                break;
-            case 3:
-                optimizer.createBackUp(); //NOT DONE TO DO: <---------
-                break;
+                case 1:
+                    optimizer.loadBackUp(); //NOT DONE TO DO: <---------
+                    break;
+                case 2:
+                    optimizer.createBackUp(); //NOT DONE TO DO: <---------
+                    break;
             
-            default:
-                cout << "Invalid option! Please try again." << endl;
-                break;
+                default:
+                    cout << "Invalid option! Please try again." << endl;
+                    break;
             }
             optimizer.manageBandwidthUsage();
             break;
         }
         case 7:
-            cout << YELLOW << "Find source code and more help at our github." << YELLOW << "https://github.com/powplowdevs/Capstone-optimizer" << endl;
-            cout << YELLOW << "There is nothing of value there right now idk why I added a \"Help\" option to be honest..." << endl;
+            SC(YELLOW);
+            cout << "Find source code and more help at our github. " << "https://github.com/powplowdevs/Capstone-optimizer" << endl;
+            cout << "There is nothing of value there right now idk why I added a \"Help\" option to be honest..." << endl;
             break;
         case 8:
             optimizer.saveData();
-            cout << RED << "Exiting..." << endl;
-            cout << RESET;
+            SC(RED);
+            cout << "Exiting..." << endl;
+            SC(RESET);
             return 0;
         default:
             cin.clear();
             cin.ignore();
+            SC(RED);
             cout << "Invalid option! Please try again." << endl;
+            SC(RESET);
             break;
         }
     }
