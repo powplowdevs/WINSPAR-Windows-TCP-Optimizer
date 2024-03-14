@@ -27,7 +27,7 @@ public:
     double speedTest();
     void speedTestCLI();
     std::string runCommand(const std::string& command);
-    std::string grabCurrentTcpValues();
+    std::vector<std::string> grabCurrentTcpValues();
     std::vector<std::pair<std::string, std::string>> listRunningProcesses(bool printValues);
     void setProcessPriorityCLI();
     bool setProcessPriority(std::string name, std::string value);

@@ -88,6 +88,7 @@ std::vector<std::pair<std::string, std::string>> optimizedApps = {};
 std::vector<std::string> optimizedAppsPriorityValues = {};
 //          Policy name
 std::vector<std::string> currentQOS = {};
+//          Policy name
 
 //****This is dependent on the speedtest CLI this should be changed later****
 //**Run command line speed test
@@ -231,9 +232,13 @@ std::string TcpOptimizer::runCommand(const std::string& command) {
 
 //**Grab the current TCP settings
 //**Post: String command promt output with TCP settings
-std::string TcpOptimizer::grabCurrentTcpValues() {
+std::vector<std::string> TcpOptimizer::grabCurrentTcpValues() {
+    std::vector<std::string> values = {};
     std::string globalVars = runCommand("netsh interface tcp show global");
     std::string wsh = runCommand("netsh int tcp show heuristics");
+
+    value.push(globalVars);
+
     return globalVars + "" + wsh;
 }
 
@@ -439,7 +444,6 @@ void TcpOptimizer::loadData() {
     }
 }
    
-
 //**Edit priority of single app
 //**Pre: String name of app and priority value to set to
 //**Post: Bool if true command exucuted successfully if false command had an error
@@ -752,13 +756,68 @@ void TcpOptimizer::manageBandwidthUsage() {
     }
 }
 
-//DO THIS METHOD*************************************************************************
+//**Load and apply TCP settings saved to BACKUP.txt
 bool TcpOptimizer::loadBackUp() {
-    return false;
+    //FORMAT name /n name ...
+
+    int index = 0;
+    //Clear file
+    std::ofstream file2("./BACKUP.txt", std::ios::trunc);
+    file2.close();
+    std::ifstream file("./BACKUP.txt");
+
+    if (!(file.is_open())) {
+        ESC(RED);
+        std::cout << "Failed to open BACKUP.txt " << GetLastError() << std::endl;
+        return false;
+    }
+    else {
+        std::string value = "";
+        while(file >> value){
+            if (index == 0) {
+                editReceiveSideScaling(value);
+            }
+            else if (index == 1) {
+                editTcpWindowAutoTuning(value);
+            }
+            else if (index == 2) {
+                editCongestionControlProvider(value);
+            }
+            else if (index == 3) {
+                editEcnCapability(value);
+            }
+            else if (index == 4) {
+                editSegmentCoalescing(value);
+            }
+            else if (index == 5) {
+                editWindowsScalingHeuristics(value);
+            }
+        }
+        file.close();
+
+        ESC(GREEN);
+        std::cout << "Loaded backup successfully.\n";
+    }
+    return true;
 }
-//DO THIS METHOD*************************************************************************
+
+//**Save all current TCP settings to BACKUP.txt
 bool TcpOptimizer::createBackUp() {
-    return false;
+    //FORMAT name /n name ...
+
+    std::string value = "";
+    //Clear file
+    std::ofstream file("./BACKUP.txt", std::ios::trunc);
+    if (!(file.is_open())) {
+        ESC(RED);
+        std::cout << "Failed to open BACKUP.txt " << GetLastError() << std::endl;
+        return false;
+    }
+    else {
+        //FINISH THIS
+        std::cout << "not done";
+    }
+    return true;
 }
 
 //**Resets all TCP registry edits to defualt values
@@ -1103,65 +1162,65 @@ void TcpOptimizer::editEcnCapability(std::string ecnOption) { // Global var
 }
 
 
-//// MAIN
-//int main() {
-//
-//    TcpOptimizer optimizer;
-//    
-//
-//
-//    optimizer.setProcessPriorityCLI();
-//    //optimizer.autoTestValues();
-//    optimizer.manageBandwidthUsage();
-//
-//    //optimizer.resetTodefault();
-//
-//    //optimizer.setProcessPriorityCLI();
-//
-//    /*std::vector<std::pair<int, SIZE_T>> vec = optimizer.GetBandwidthUsage();
-//    for (const auto& entry : vec) {
-//        std::cout << "Process ID: " << entry.first << ", Network Usage: " << entry.second << " bytes" << std::endl;
-//    }*/
-//
-//    
-//
-//    //optimizer.createQoS("test", "firefox.exe", "5");
-//    //optimizer.removeQoS("test");
-//
-//    //optimizer.applyBandwidthLimit();
-//
-//    //optimizer.autoTestValues();
-//
-//    // std::cout << optimizer.speedTest();
-//
-//    // runCommand("netsh interface tcp show global");
-//    // std::cout << speedTest() << std::endl;
-//
-//    //optimizer.resetTodefault();
-//    // std::cout << "done";
-//    //optimizer.autoTestValues();
-//    // std::map<std::string, std::string> userSettings = {
-//    //     {"TCPWindowAutoTuning", "normal"},
-//    //     {"WindowsScalingHeuristics", "enabled"},
-//    //     {"CongestionControlProvider", "default"},
-//    //     {"Receive-sideScaling", "enabled"},
-//    //     {"SegmentCoalescing", "enabled"},
-//    //     {"ECNcapability", "default"}
-//    // };
-//
-//    // optimizer.manualTestVal(userSettings);
-//
-//    // Example usage (RUN AT YOUR OWN RISK)
-//    // optimizer.editTcpConnectionSpeed(100000); // Set connection speed to 100 Mbps
-//    // optimizer.editTcpWindowAutoTuning("experimental"); // Set TCP window auto tuning to experimental
-//    // optimizer.editWindowsScalingHeuristics("enabled"); // Set Windows scaling heuristics to enabled
-//    // optimizer.editCongestionControlProvider("CUBIC"); // Set congestion control provider to CUBIC
-//    // optimizer.editReceiveSideScaling("enabled"); // Enable Receive-side scaling
-//    // optimizer.editSegmentCoalescing("enabled"); // Enable R. segment coalescing
-//    // optimizer.editEcnCapability("enabled"); // Enable ECN capability
-//    // optimizer.editChecksumOffloading("enabled"); // Enable checksum offloading
-//    // optimizer.editTcpChimneyOffload("enabled"); // Enable TCP chimney offload
-//    // optimizer.editLargeSendOffload("enabled"); // Enable Large Send Offload
-//
-//    return 0;
-//}
+// MAIN
+int main() {
+
+    TcpOptimizer optimizer;
+    
+    optimizer.grabCurrentTcpValues();
+
+    //optimizer.setProcessPriorityCLI();
+    ////optimizer.autoTestValues();
+    //optimizer.manageBandwidthUsage();
+
+    //optimizer.resetTodefault();
+
+    //optimizer.setProcessPriorityCLI();
+
+    /*std::vector<std::pair<int, SIZE_T>> vec = optimizer.GetBandwidthUsage();
+    for (const auto& entry : vec) {
+        std::cout << "Process ID: " << entry.first << ", Network Usage: " << entry.second << " bytes" << std::endl;
+    }*/
+
+    
+
+    //optimizer.createQoS("test", "firefox.exe", "5");
+    //optimizer.removeQoS("test");
+
+    //optimizer.applyBandwidthLimit();
+
+    //optimizer.autoTestValues();
+
+    // std::cout << optimizer.speedTest();
+
+    // runCommand("netsh interface tcp show global");
+    // std::cout << speedTest() << std::endl;
+
+    //optimizer.resetTodefault();
+    // std::cout << "done";
+    //optimizer.autoTestValues();
+    // std::map<std::string, std::string> userSettings = {
+    //     {"TCPWindowAutoTuning", "normal"},
+    //     {"WindowsScalingHeuristics", "enabled"},
+    //     {"CongestionControlProvider", "default"},
+    //     {"Receive-sideScaling", "enabled"},
+    //     {"SegmentCoalescing", "enabled"},
+    //     {"ECNcapability", "default"}
+    // };
+
+    // optimizer.manualTestVal(userSettings);
+
+    // Example usage (RUN AT YOUR OWN RISK)
+    // optimizer.editTcpConnectionSpeed(100000); // Set connection speed to 100 Mbps
+    // optimizer.editTcpWindowAutoTuning("experimental"); // Set TCP window auto tuning to experimental
+    // optimizer.editWindowsScalingHeuristics("enabled"); // Set Windows scaling heuristics to enabled
+    // optimizer.editCongestionControlProvider("CUBIC"); // Set congestion control provider to CUBIC
+    // optimizer.editReceiveSideScaling("enabled"); // Enable Receive-side scaling
+    // optimizer.editSegmentCoalescing("enabled"); // Enable R. segment coalescing
+    // optimizer.editEcnCapability("enabled"); // Enable ECN capability
+    // optimizer.editChecksumOffloading("enabled"); // Enable checksum offloading
+    // optimizer.editTcpChimneyOffload("enabled"); // Enable TCP chimney offload
+    // optimizer.editLargeSendOffload("enabled"); // Enable Large Send Offload
+
+    return 0;
+}
