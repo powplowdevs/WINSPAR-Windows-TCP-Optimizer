@@ -1,5 +1,6 @@
-#include <iostream>
+﻿#include <iostream>
 #include <string>
+#include <windows.h>
 #include "editor.h"
 
 //Colors
@@ -13,8 +14,7 @@
 #define WHITE   15 //CLI Promts
 
 //Borders
-#define smileyFace1 string(1,char (0));
-#define smileyFace2 string(1,char (1));
+#define smileyFace string(1,char (1));
 #define leftArrow string(1,char (174));
 #define RightArrow string(1,char (175));
 #define SoildBorderThin string(1,char (177));
@@ -27,7 +27,6 @@
 #define DoubleLineBorderBottomRight string(1,char (188));
 #define DoubleLineBorderBottomLeft string(1,char (200));
 #define DoubleLineBorderTopLeft string(1,char (201));
-
 
 using namespace std;
 
@@ -64,13 +63,13 @@ int main() {
 
     //ON BOOT
     //Read QoS and Priority data
-    optimizer.loadData();
+    //optimizer.loadData();
     //Clear QoS folder
-    optimizer.clearQoS();
+    //optimizer.clearQoS();
     ////Set app priority
-    optimizer.setProcessPriorityListCLI();
+    //optimizer.setProcessPriorityListCLI();
     ////Manage bandwitdh
-    optimizer.manageBandwidthUsage();
+    //optimizer.manageBandwidthUsage();
     
 
     //MAINLOOP
@@ -95,7 +94,7 @@ int main() {
         cout << "\n";
         SC(CYAN);
         cout << DoubleLineBorderVertical;
-        cout << " 3. Custom edit TCP          ";
+        cout << " 3. Custom edit TCP(obsolete)";
         cout << DoubleLineBorderVertical;
         cout << "\n";
         SC(RESET);
@@ -145,8 +144,10 @@ int main() {
             optimizer.manageBandwidthUsage();
             break;
         case 3:
-            //optimizer.manualTestVal(); //NOT DONE TO DO: <---------
-            cout << "THIS IS NOT DONE YET DO THIS!" << endl;
+            //optimizer.manualTestVal();
+            SC(YELLOW);
+            wcout << "Sorry this feature is obsolete \U0001F600";
+            cout << endl;
             break;
         case 4:
             optimizer.manageBandwidthUsage();
@@ -199,7 +200,7 @@ int main() {
             cin.clear();
             cin.ignore();
             SC(RED);
-            cout << "Invalid option! Please try again." << endl;
+            cout << endl << "Invalid option! Please try again." << endl;
             SC(RESET);
             break;
         }

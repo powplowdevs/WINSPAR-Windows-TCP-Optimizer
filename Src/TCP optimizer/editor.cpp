@@ -894,6 +894,7 @@ bool TcpOptimizer::resetTodefault() {
 
 //**Manually lets user edit TCP registry values
 //**Post: Bool true no matter what
+//This function is obsolete
 bool TcpOptimizer::manualTestVal(const std::map<std::string, std::string>& userSettings) {
     //Apply settings
     for (const auto& setting : userSettings) {
@@ -1102,7 +1103,7 @@ void TcpOptimizer::editTcpConnectionSpeed(int speed) {
         std::cout << "TCP connection speed edited successfully." << std::endl;
     } else {
         ESC(RED);
-        std::cout << "Error editing TCP connection speed." << std::endl;
+        std::cout << "Error editing TCP connection speed." << std::to_string(result) << std::endl;
             
     }
 }
@@ -1117,7 +1118,7 @@ void TcpOptimizer::editTcpWindowAutoTuning(std::string tuningOption) { // Global
         std::cout << "TCP window auto tuning edited successfully." << std::endl;
     } else {
         ESC(RED);
-        std::cout << "Error editing TCP window auto tuning." << std::endl;
+        std::cout << "Error editing TCP window auto tuning." << std::to_string(result) << std::endl;
     }
 }
 
@@ -1131,7 +1132,7 @@ void TcpOptimizer::editWindowsScalingHeuristics(std::string scalingOption) { // 
         std::cout << "Windows scaling heuristics edited successfully." << std::endl;
     } else {
         ESC(RED);
-        std::cout << "Error editing Windows scaling heuristics." << std::endl;
+        std::cout << "Error editing Windows scaling heuristics." << std::to_string(result) << std::endl;
     }
 }
 
@@ -1145,7 +1146,7 @@ void TcpOptimizer::editCongestionControlProvider(std::string providerOption) { /
         std::cout << "Congestion control provider edited successfully." << std::endl;
     } else {
         ESC(RED);
-        std::cout << "Error editing congestion control provider." << std::endl;
+        std::cout << "Error editing congestion control provider." << std::to_string(result) << std::endl;
     }
 }
 
@@ -1159,7 +1160,7 @@ void TcpOptimizer::editReceiveSideScaling(std::string rssOption) { // Global var
         std::cout << "Receive-side scaling edited successfully." << std::endl;
     } else {
         ESC(RED);
-        std::cout << "Error editing Receive-side scaling."  << std::endl;
+        std::cout << "Error editing Receive-side scaling." << std::to_string(result) << std::endl;
     }
 }
 
@@ -1173,7 +1174,7 @@ void TcpOptimizer::editSegmentCoalescing(std::string rscOption) { // Global var
         std::cout << "Segment coalescing edited successfully." << std::endl;
     } else {
         ESC(RED);
-        std::cout << "Error editing segment coalescing." << std::endl;
+        std::cout << "Error editing segment coalescing." << std::to_string(result) << std::endl;
     }
 }
 
@@ -1189,7 +1190,7 @@ void TcpOptimizer::editEcnCapability(std::string ecnOption) { // Global var
         std::cout << "ECN capability edited successfully." << std::endl;
     } else {
         ESC(RED);
-        std::cout << "Error editing ECN capability." << std::endl;
+        std::cout << "Error editing ECN capability: " << std::to_string(result) << std::endl;
     }
 }
 
