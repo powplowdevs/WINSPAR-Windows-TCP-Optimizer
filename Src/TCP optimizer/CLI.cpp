@@ -171,10 +171,10 @@ int main() {
             switch (choice2)
             {
                 case 1:
-                    optimizer.loadBackUp(); //NOT DONE TO DO: <---------
+                    optimizer.loadBackUp();
                     break;
                 case 2:
-                    optimizer.createBackUp(); //NOT DONE TO DO: <---------
+                    optimizer.createBackUp();
                     break;
             
                 default:

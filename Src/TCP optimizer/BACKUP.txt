@@ -1,14 +1,6 @@
-Receive-Side Scaling State          : disabled
-Receive Window Auto-Tuning Level    : disabled
-Add-On Congestion Control Provider  : default
-ECN Capability                      : disabled
-RFC 1323 Timestamps                 : disabled
-Initial RTO                         : 2000
-Receive Segment Coalescing State    : disabled
-Non Sack Rtt Resiliency             : disabled
-Max SYN Retransmissions             : 2
-Fast Open                           : enabled
-Fast Open Fallback                  : enabled
-HyStart                             : enabled
-Proportional Rate Reduction         : enabled
-Pacing Profile                      : off
+disabled 
+disabled 
+default 
+disabled 
+disabled 
+disabled 
