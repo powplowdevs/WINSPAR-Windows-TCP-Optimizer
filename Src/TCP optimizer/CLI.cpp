@@ -63,13 +63,13 @@ int main() {
 
     //ON BOOT
     //Read QoS and Priority data
-    //optimizer.loadData();
+    optimizer.loadData();
     //Clear QoS folder
-    //optimizer.clearQoS();
-    ////Set app priority
-    //optimizer.setProcessPriorityListCLI();
-    ////Manage bandwitdh
-    //optimizer.manageBandwidthUsage();
+    optimizer.clearQoS();
+    //Set app priority
+    optimizer.setProcessPriorityListCLI();
+    //Manage bandwitdh
+    optimizer.manageBandwidthUsage();
     
 
     //MAINLOOP

@@ -716,12 +716,12 @@ std::vector<std::pair<int, SIZE_T>> TcpOptimizer::GetBandwidthUsage() {
         return a.second > b.second;
     });
 
-    int index = 30;
+    int index = 10;
     while (true)
     {
         try
         {
-            sortedProcessVector.erase(sortedProcessVector.begin() + 30, sortedProcessVector.end());
+            sortedProcessVector.erase(sortedProcessVector.begin() + 10, sortedProcessVector.end());
             break;
         }
         catch (const std::exception&)
@@ -777,7 +777,7 @@ void TcpOptimizer::manageBandwidthUsage() {
                 if (!isInVector(name, currentQOS)) {
                     ESC(YELLOW);
                     std::cout << "Creating QoS policy for " << name;
-                    createQoS(name, name, "5");//MAYBE EDIT THROLLTE RATE LATER
+                    createQoS(name, name, "2");//MAYBE EDIT THROLLTE RATE LATER
                 }
             }
         }
