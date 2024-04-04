@@ -2,6 +2,8 @@
 #include <string>
 #include <windows.h>
 #include "editor.h"
+#include <thread> // Include thread library
+#include <chrono>
 
 //Colors
 #define RESET   7
@@ -29,6 +31,14 @@
 #define DoubleLineBorderTopLeft string(1,char (201));
 
 using namespace std;
+
+//Run dynamic updates
+void dynamicUpdates(TcpOptimizer& optimizer) {
+    while (true) {
+        optimizer.manageBandwidthUsage();
+        std::this_thread::sleep_for(std::chrono::minutes(30));
+    }
+}
 
 //Set console text color
 void SC(int color) {
@@ -59,152 +69,159 @@ void printBanner(const string message, const int color) {
 }
 
 int main() {
+    //Optimizer instance
     TcpOptimizer optimizer;
-
-    //ON BOOT
-    //Read QoS and Priority data
-    optimizer.loadData();
-    //Clear QoS folder
-    optimizer.clearQoS();
-    //Set app priority
-    optimizer.setProcessPriorityListCLI();
-    //Manage bandwitdh
-    optimizer.manageBandwidthUsage();
+    //Dynamic update thread
+    std::thread periodicThread(dynamicUpdates, std::ref(optimizer));
+    //Free console
+    FreeConsole();
     
-
-    //MAINLOOP
+    //Main loop
     while (true) {
-        //Intro banner
-        printBanner("Welcome to TCP Optimizer CLI!", WHITE);
+        //ON BOOT
+        //Read QoS and Priority data
+        optimizer.loadData();
+        //Clear QoS folder
+        optimizer.clearQoS();
+        //Set app priority
+        optimizer.setProcessPriorityListCLI();
+        //Manage bandwitdh
+        optimizer.manageBandwidthUsage();
 
-        SC(WHITE);
-        cout << RightArrow;
-        cout << " Options:                   ";
-        cout << DoubleLineBorderVertical;
-        cout << "\n";
-        SC(CYAN);
-        cout << DoubleLineBorderVertical;
-        cout << " 1. Run Speed Test           ";
-        cout << DoubleLineBorderVertical;
-        cout << "\n";
-        SC(RESET);
-        cout << DoubleLineBorderVertical;
-        cout << " 2. Auto optimize            ";
-        cout << DoubleLineBorderVertical;
-        cout << "\n";
-        SC(CYAN);
-        cout << DoubleLineBorderVertical;
-        cout << " 3. Custom edit TCP(obsolete)";
-        cout << DoubleLineBorderVertical;
-        cout << "\n";
-        SC(RESET);
-        cout << DoubleLineBorderVertical;
-        cout << " 4. Manage app bandwidth     ";
-        cout << DoubleLineBorderVertical;
-        cout << "\n";
-        SC(CYAN);
-        cout << DoubleLineBorderVertical;
-        cout << " 5. Reset settings to Default";
-        cout << DoubleLineBorderVertical;
-        cout << "\n";
-        SC(RESET);;
-        cout << DoubleLineBorderVertical;
-        cout << " 6. Load/Create TCP backup   ";
-        cout << DoubleLineBorderVertical;
-        cout << "\n";
-        SC(MAGENTA);
-        cout << DoubleLineBorderVertical;
-        cout << " 7. Help                     ";
-        cout << DoubleLineBorderVertical;
-        cout << "\n";
-        SC(RED);
-        cout << DoubleLineBorderVertical;
-        cout << " 8. Exit                     ";
-        cout << DoubleLineBorderVertical;
-        cout << "\n";
-        SC(WHITE);
-        cout << DoubleLineBorderBottomLeft;
-        for (size_t i = 0; i < 29; i++) {
-            cout << DoubleLineBorderHorizontal;
-        }
-        cout << DoubleLineBorderBottomRight;
-        cout << endl;
-        SC(RESET);;
+        //MAINLOOP
+        while (true) {
+            //Intro banner
+            printBanner("Welcome to TCP Optimizer CLI!", WHITE);
 
-        int choice;
-        cout << "Choose an option: ";
-        cin >> choice;
-
-        switch (choice) {
-        case 1:
-            optimizer.speedTestCLI();
-            break;
-        case 2:
-            optimizer.autoTestValues();
-            optimizer.manageBandwidthUsage();
-            break;
-        case 3:
-            //optimizer.manualTestVal();
-            SC(YELLOW);
-            wcout << "Sorry this feature is obsolete \U0001F600";
-            cout << endl;
-            break;
-        case 4:
-            optimizer.manageBandwidthUsage();
-            break;
-        case 5: {
-            optimizer.resetTodefault();
-            break;
-        }
-        case 6: {
-            printBanner("Load/Create TCP settings backup", WHITE);
             SC(WHITE);
+            cout << RightArrow;
+            cout << " Options:                   ";
+            cout << DoubleLineBorderVertical;
+            cout << "\n";
+            SC(CYAN);
+            cout << DoubleLineBorderVertical;
+            cout << " 1. Run Speed Test           ";
+            cout << DoubleLineBorderVertical;
+            cout << "\n";
+            SC(RESET);
+            cout << DoubleLineBorderVertical;
+            cout << " 2. Auto optimize            ";
+            cout << DoubleLineBorderVertical;
+            cout << "\n";
+            SC(CYAN);
+            cout << DoubleLineBorderVertical;
+            cout << " 3. Custom edit TCP(obsolete)";
+            cout << DoubleLineBorderVertical;
+            cout << "\n";
+            SC(RESET);
+            cout << DoubleLineBorderVertical;
+            cout << " 4. Manage app bandwidth     ";
+            cout << DoubleLineBorderVertical;
+            cout << "\n";
+            SC(CYAN);
+            cout << DoubleLineBorderVertical;
+            cout << " 5. Reset settings to Default";
+            cout << DoubleLineBorderVertical;
+            cout << "\n";
+            SC(RESET);;
+            cout << DoubleLineBorderVertical;
+            cout << " 6. Load/Create TCP backup   ";
+            cout << DoubleLineBorderVertical;
+            cout << "\n";
+            SC(MAGENTA);
+            cout << DoubleLineBorderVertical;
+            cout << " 7. Help                     ";
+            cout << DoubleLineBorderVertical;
+            cout << "\n";
+            SC(RED);
+            cout << DoubleLineBorderVertical;
+            cout << " 8. Exit                     ";
+            cout << DoubleLineBorderVertical;
+            cout << "\n";
+            SC(WHITE);
+            cout << DoubleLineBorderBottomLeft;
+            for (size_t i = 0; i < 29; i++) {
+                cout << DoubleLineBorderHorizontal;
+            }
+            cout << DoubleLineBorderBottomRight;
             cout << endl;
+            SC(RESET);;
 
-            cout << "\nOptions:\n";
-            cout << "1. Load backup\n";
-            cout << "2. Create Backup\n";
+            int choice;
             cout << "Choose an option: ";
-            int choice2;
-            cin.ignore();
-            cin >> choice2;
+            cin >> choice;
 
-            switch (choice2)
-            {
+            switch (choice) {
+            case 1:
+                optimizer.speedTestCLI();
+                break;
+            case 2:
+                optimizer.autoTestValues();
+                optimizer.manageBandwidthUsage();
+                break;
+            case 3:
+                //optimizer.manualTestVal();
+                SC(YELLOW);
+                wcout << "Sorry this feature is obsolete \U0001F600";
+                cout << endl;
+                break;
+            case 4:
+                optimizer.manageBandwidthUsage();
+                break;
+            case 5: {
+                optimizer.resetTodefault();
+                break;
+            }
+            case 6: {
+                printBanner("Load/Create TCP settings backup", WHITE);
+                SC(WHITE);
+                cout << endl;
+
+                cout << "\nOptions:\n";
+                cout << "1. Load backup\n";
+                cout << "2. Create Backup\n";
+                cout << "Choose an option: ";
+                int choice2;
+                cin.ignore();
+                cin >> choice2;
+
+                switch (choice2)
+                {
                 case 1:
                     optimizer.loadBackUp();
                     break;
                 case 2:
                     optimizer.createBackUp();
                     break;
-            
+
                 default:
                     cout << "Invalid option! Please try again." << endl;
                     break;
+                }
+                optimizer.manageBandwidthUsage();
+                break;
             }
-            optimizer.manageBandwidthUsage();
-            break;
-        }
-        case 7:
-            SC(YELLOW);
-            cout << "Find source code and more help at our github. " << "https://github.com/powplowdevs/Capstone-optimizer" << endl;
-            cout << "There is nothing of value there right now idk why I added a \"Help\" option to be honest..." << endl;
-            break;
-        case 8:
-            optimizer.saveData();
-            SC(RED);
-            cout << "Exiting..." << endl;
-            SC(RESET);
-            return 0;
-        default:
-            cin.clear();
-            cin.ignore();
-            SC(RED);
-            cout << endl << "Invalid option! Please try again." << endl;
-            SC(RESET);
-            break;
+            case 7:
+                SC(YELLOW);
+                cout << "Find source code and more help at our github. " << "https://github.com/powplowdevs/Capstone-optimizer" << endl;
+                cout << "There is nothing of value there right now idk why I added a \"Help\" option to be honest..." << endl;
+                break;
+            case 8:
+                optimizer.saveData();
+                SC(RED);
+                cout << "Exiting..." << endl;
+                SC(RESET);
+                return 0;
+            default:
+                cin.clear();
+                cin.ignore();
+                SC(RED);
+                cout << endl << "Invalid option! Please try again." << endl;
+                SC(RESET);
+                break;
+            }
         }
     }
-
+    
     return 0;
 }

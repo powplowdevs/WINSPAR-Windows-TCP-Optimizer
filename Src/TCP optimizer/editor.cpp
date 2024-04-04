@@ -954,137 +954,139 @@ bool TcpOptimizer::autoTestValues() {
     std::string bestSetting;
 
     //Loop eace
-    for (const auto& pair : RegistryEditDict) {
-        for (const auto& value : pair.second) {
-            if (pair.first == "TCPWindowAutoTuning") {
-                //SET VALUE
-                ESC(YELLOW);
-                std::cout << "Running TCP-Window-Auto-Tuning with: " << value << std::endl;
+    if (1 == 2) {
+        for (const auto& pair : RegistryEditDict) {
+            for (const auto& value : pair.second) {
+                if (pair.first == "TCPWindowAutoTuning") {
+                    //SET VALUE
+                    ESC(YELLOW);
+                    std::cout << "Running TCP-Window-Auto-Tuning with: " << value << std::endl;
 
-                editTcpWindowAutoTuning(value);
-                //run speed test
-                int speed = speedTest();
-                if (speed >= highSpeed) {
-                    highSpeed = speed;
-                    bestSetting = value;
+                    editTcpWindowAutoTuning(value);
+                    //run speed test
+                    int speed = speedTest();
+                    if (speed >= highSpeed) {
+                        highSpeed = speed;
+                        bestSetting = value;
+                    }
+                    editTcpWindowAutoTuning(bestSetting);
                 }
-                editTcpWindowAutoTuning(bestSetting);
-            }
-            if (pair.first == "WindowsScalingHeuristics") {
-                //SET VALUE
-                ESC(YELLOW);
-                std::cout << "Running WindowsScalingHeuristics with: " << value << std::endl;
+                if (pair.first == "WindowsScalingHeuristics") {
+                    //SET VALUE
+                    ESC(YELLOW);
+                    std::cout << "Running WindowsScalingHeuristics with: " << value << std::endl;
 
-                editWindowsScalingHeuristics(value);
-                //run speed test
-                int speed = speedTest();
-                if (speed >= highSpeed) {
-                    highSpeed = speed;
-                    bestSetting = value;
+                    editWindowsScalingHeuristics(value);
+                    //run speed test
+                    int speed = speedTest();
+                    if (speed >= highSpeed) {
+                        highSpeed = speed;
+                        bestSetting = value;
+                    }
+                    editWindowsScalingHeuristics(bestSetting);
                 }
-                editWindowsScalingHeuristics(bestSetting);
-            }
-            if (pair.first == "CongestionControlProvider") {
+                if (pair.first == "CongestionControlProvider") {
 
-                //SET VALUE
-                ESC(YELLOW);
-                std::cout << "Running CongestionControlProvider with: " << value << std::endl;
+                    //SET VALUE
+                    ESC(YELLOW);
+                    std::cout << "Running CongestionControlProvider with: " << value << std::endl;
 
-                editCongestionControlProvider(value);
-                //run speed test
-                int speed = speedTest();
-                if (speed >= highSpeed) {
-                    highSpeed = speed;
-                    bestSetting = value;
+                    editCongestionControlProvider(value);
+                    //run speed test
+                    int speed = speedTest();
+                    if (speed >= highSpeed) {
+                        highSpeed = speed;
+                        bestSetting = value;
+                    }
+                    editCongestionControlProvider(bestSetting);
                 }
-                editCongestionControlProvider(bestSetting);
-            }
-            if (pair.first == "Receive-sideScaling") {
+                if (pair.first == "Receive-sideScaling") {
 
-                //SET VALUE
-                ESC(YELLOW);
-                std::cout << "Running Receive-sideScaling with: " << value << std::endl;
+                    //SET VALUE
+                    ESC(YELLOW);
+                    std::cout << "Running Receive-sideScaling with: " << value << std::endl;
 
-                editReceiveSideScaling(value);
-                //run speed test
-                int speed = speedTest();
-                if (speed >= highSpeed) {
-                    highSpeed = speed;
-                    bestSetting = value;
+                    editReceiveSideScaling(value);
+                    //run speed test
+                    int speed = speedTest();
+                    if (speed >= highSpeed) {
+                        highSpeed = speed;
+                        bestSetting = value;
+                    }
+                    editReceiveSideScaling(bestSetting);
                 }
-                editReceiveSideScaling(bestSetting);
-            }
-            if (pair.first == "SegmentCoalescing") {
+                if (pair.first == "SegmentCoalescing") {
 
-                //SET VALUE
-                ESC(YELLOW);
-                std::cout << "Running SegmentCoalescing with: " << value << std::endl;
+                    //SET VALUE
+                    ESC(YELLOW);
+                    std::cout << "Running SegmentCoalescing with: " << value << std::endl;
 
-                editSegmentCoalescing(value);
-                //run speed test
-                int speed = speedTest();
-                if (speed >= highSpeed) {
-                    highSpeed = speed;
-                    bestSetting = value;
+                    editSegmentCoalescing(value);
+                    //run speed test
+                    int speed = speedTest();
+                    if (speed >= highSpeed) {
+                        highSpeed = speed;
+                        bestSetting = value;
+                    }
+                    editSegmentCoalescing(bestSetting);
                 }
-                editSegmentCoalescing(bestSetting);
-            }
-            if (pair.first == "ECNcapability") {
+                if (pair.first == "ECNcapability") {
 
-                //SET VALUE
-                ESC(YELLOW);
-                std::cout << "Running ECNcapability with: " << value << std::endl;
+                    //SET VALUE
+                    ESC(YELLOW);
+                    std::cout << "Running ECNcapability with: " << value << std::endl;
 
-                editEcnCapability(value);
-                //run speed test
-                int speed = speedTest();
-                if (speed >= highSpeed) {
-                    highSpeed = speed;
-                    bestSetting = value;
+                    editEcnCapability(value);
+                    //run speed test
+                    int speed = speedTest();
+                    if (speed >= highSpeed) {
+                        highSpeed = speed;
+                        bestSetting = value;
+                    }
+                    editEcnCapability(bestSetting);
                 }
-                editEcnCapability(bestSetting);
+                // if(pair.first == "ChecksumOffloading"){
+
+                //     //SET VALUE
+                //     std::cout << "Running ChecksumOffloading with: " << value << std::endl;
+                //     //run speed test
+                //     int speed = speedTest();
+                // if(speed >= highSpeed){
+                //         highSpeed = speed;
+                //         bestSetting = value;
+                //     }
+                // }
+                // if(pair.first == "TCPChimneyOffload"){
+
+                //     //SET VALUE
+                //     std::cout << "Running TCPChimneyOffload with: " << value << std::endl;
+                //     editTcpChimneyOffload(value);
+                //     //run speed test
+                //     int speed = speedTest();
+                //     if(speed >= highSpeed){
+                //             highSpeed = speed;
+                //             bestSetting = value;
+                //         }
+                // }
+                // if(pair.first == "LargeSendOffload"){
+
+                //     //SET VALUE
+                //     std::cout << "Running LargeSendOffload with: " << value << std::endl;
+                //     editLargeSendOffload(value);
+                //     //run speed test
+                //     int speed = speedTest();
+                //     if(speed >= highSpeed){
+                //         highSpeed = speed;
+                //         bestSetting = value;
+                //     }
+                // }
+                std::cout << "---------------------------------------------------------------------------------------" << "\n\n";
             }
-            // if(pair.first == "ChecksumOffloading"){
+            std::cout << "Best setting for " << pair.first << " is " << bestSetting << std::endl;
 
-            //     //SET VALUE
-            //     std::cout << "Running ChecksumOffloading with: " << value << std::endl;
-            //     //run speed test
-            //     int speed = speedTest();
-            // if(speed >= highSpeed){
-            //         highSpeed = speed;
-            //         bestSetting = value;
-            //     }
-            // }
-            // if(pair.first == "TCPChimneyOffload"){
-
-            //     //SET VALUE
-            //     std::cout << "Running TCPChimneyOffload with: " << value << std::endl;
-            //     editTcpChimneyOffload(value);
-            //     //run speed test
-            //     int speed = speedTest();
-            //     if(speed >= highSpeed){
-            //             highSpeed = speed;
-            //             bestSetting = value;
-            //         }
-            // }
-            // if(pair.first == "LargeSendOffload"){
-
-            //     //SET VALUE
-            //     std::cout << "Running LargeSendOffload with: " << value << std::endl;
-            //     editLargeSendOffload(value);
-            //     //run speed test
-            //     int speed = speedTest();
-            //     if(speed >= highSpeed){
-            //         highSpeed = speed;
-            //         bestSetting = value;
-            //     }
-            // }
-            std::cout << "---------------------------------------------------------------------------------------" << "\n\n";
         }
-        std::cout << "Best setting for " << pair.first << " is " << bestSetting << std::endl;
 
     }
-
     ESC(GREEN);
     std::cout << "Auto value optimization complete!" << std::endl;
     ESC(RESET);
