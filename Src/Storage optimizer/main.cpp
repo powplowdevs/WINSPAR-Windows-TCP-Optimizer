@@ -1,42 +1,54 @@
-#include <Windows.h>
+#include <windows.h>
 #include <iostream>
+#include <string>
 
-int main() {
-    LPCWSTR rootPath = L"C:\\"; //EDIT TO WHAT PATH WE WANT
-    DISK_SPACE_INFORMATION diskSpaceInfo;
+using namespace std;
 
-    if (GetDiskSpaceInformationW(rootPath, &diskSpaceInfo)) {
-        std::cout << "Actual Total Allocation Units: " << diskSpaceInfo.ActualTotalAllocationUnits << std::endl;
-        std::cout << "Actual Available Allocation Units: " << diskSpaceInfo.ActualAvailableAllocationUnits << std::endl;
-        std::cout << "Actual Pool Unavailable Allocation Units: " << diskSpaceInfo.ActualPoolUnavailableAllocationUnits << std::endl;
-        std::cout << "Caller Total Allocation Units: " << diskSpaceInfo.CallerTotalAllocationUnits << std::endl;
-        std::cout << "Caller Available Allocation Units: " << diskSpaceInfo.CallerAvailableAllocationUnits << std::endl;
-        std::cout << "Caller Pool Unavailable Allocation Units: " << diskSpaceInfo.CallerPoolUnavailableAllocationUnits << std::endl;
-        std::cout << "Used Allocation Units: " << diskSpaceInfo.UsedAllocationUnits << std::endl;
-        std::cout << "Total Reserved Allocation Units: " << diskSpaceInfo.TotalReservedAllocationUnits << std::endl;
-        std::cout << "Volume Storage Reserve Allocation Units: " << diskSpaceInfo.VolumeStorageReserveAllocationUnits << std::endl;
-        std::cout << "Available Committed Allocation Units: " << diskSpaceInfo.AvailableCommittedAllocationUnits << std::endl;
-        std::cout << "Pool Available Allocation Units: " << diskSpaceInfo.PoolAvailableAllocationUnits << std::endl;
-        std::cout << "Sectors Per Allocation Unit: " << diskSpaceInfo.SectorsPerAllocationUnit << std::endl;
-        std::cout << "Bytes Per Sector: " << diskSpaceInfo.BytesPerSector << std::endl;
+//Helper function to convert char array to wstring BROKEN!!!
+wstring MultiByteToWideCharString(const char* narrowStr) {
+    int size = MultiByteToWideChar(CP_ACP, 0, narrowStr, -1, nullptr, 0);
+    if (size == 0)
+        return L"";
+    wstring wideStr(size, 0);
+    MultiByteToWideChar(CP_ACP, 0, narrowStr, -1, &wideStr[0], size);
+    return wideStr;
+}
+
+ULONGLONG GetFolderSize(const wstring& folderPath) {
+    WIN32_FIND_DATA findData;
+    HANDLE hFind = FindFirstFileExW((folderPath + L"\\*").c_str(), FindExInfoStandard, &findData, FindExSearchLimitToDirectories, NULL, 0);
+
+    ULONGLONG folderSize = 0;
+    if (hFind != INVALID_HANDLE_VALUE) {
+        do {
+            if (!(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+                ULARGE_INTEGER fileSize;
+                fileSize.LowPart = findData.nFileSizeLow;
+                fileSize.HighPart = findData.nFileSizeHigh;
+                folderSize += fileSize.QuadPart;
+                cout << "hi" << endl;
+            }
+            else {
+                wstring wideString = MultiByteToWideCharString(findData.cFileName);
+                if (!wideString.empty()) {
+                    wstring path = folderPath + L"\\" + wideString;
+                    wcout << path << endl;
+                    folderSize += GetFolderSize(path);
+                }
+            }
+        } while (FindNextFile(hFind, &findData));
+        FindClose(hFind);
     }
     else {
-        std::cerr << "Ur dumb asf. Error code: " << GetLastError() << std::endl;
-        std::cout << "Actual Total Allocation Units: " << diskSpaceInfo.ActualTotalAllocationUnits << std::endl;
-        std::cout << "Actual Available Allocation Units: " << diskSpaceInfo.ActualAvailableAllocationUnits << std::endl;
-        std::cout << "Actual Pool Unavailable Allocation Units: " << diskSpaceInfo.ActualPoolUnavailableAllocationUnits << std::endl;
-        std::cout << "Caller Total Allocation Units: " << diskSpaceInfo.CallerTotalAllocationUnits << std::endl;
-        std::cout << "Caller Available Allocation Units: " << diskSpaceInfo.CallerAvailableAllocationUnits << std::endl;
-        std::cout << "Caller Pool Unavailable Allocation Units: " << diskSpaceInfo.CallerPoolUnavailableAllocationUnits << std::endl;
-        std::cout << "Used Allocation Units: " << diskSpaceInfo.UsedAllocationUnits << std::endl;
-        std::cout << "Total Reserved Allocation Units: " << diskSpaceInfo.TotalReservedAllocationUnits << std::endl;
-        std::cout << "Volume Storage Reserve Allocation Units: " << diskSpaceInfo.VolumeStorageReserveAllocationUnits << std::endl;
-        std::cout << "Available Committed Allocation Units: " << diskSpaceInfo.AvailableCommittedAllocationUnits << std::endl;
-        std::cout << "Pool Available Allocation Units: " << diskSpaceInfo.PoolAvailableAllocationUnits << std::endl;
-        std::cout << "Sectors Per Allocation Unit: " << diskSpaceInfo.SectorsPerAllocationUnit << std::endl;
-        std::cout << "Bytes Per Sector: " << diskSpaceInfo.BytesPerSector << std::endl;
-        return 1;
+        cerr << "Error: " << GetLastError();
     }
 
+    return folderSize;
+}
+
+int main() {
+    wstring folderPath = L"C:\\Users\\kalid.DESKTOP-TUS9USS\\Documents\\GitHub\\Capstone-optimizer";
+    ULONGLONG folderSize = GetFolderSize(folderPath);
+    wcout << L"Folder size: " << folderSize / (1024 * 1024) << L" MB" << endl;
     return 0;
 }
