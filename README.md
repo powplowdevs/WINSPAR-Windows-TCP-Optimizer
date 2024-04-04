@@ -43,7 +43,7 @@ A simple to use command-line interface is used to navigate TCP Optimizer, it off
 - **Application Prioritization:** Users can prioritize specific applications to ensure they receive preferential treatment in terms of windows provied CPU time. This feature is particularly useful for ensuring smooth performance in applications such as streaming services.
 
 ## How It Works
-TCP Optimizer relies on the manipulation of Windows registry settings and system APIs to modify TCP parameters. It uses various WinAPI functions for tasks such as, adjusting TCP settings, applying QoS policies utilizeing the [windows QoS](https://learn.microsoft.com/en-us/windows-server/networking/technologies/qos/qos-policy-top), for this reason it needs to be run in administrator mode. 
+TCP Optimizer relies on the manipulation of Windows registry settings and system APIs to modify TCP parameters. It uses various WinAPI functions for tasks such as, adjusting TCP settings, applying QoS policies utilizing the [windows QoS](https://learn.microsoft.com/en-us/windows-server/networking/technologies/qos/qos-policy-top), for this reason it needs to be run in administrator mode. 
 
 ### Benefits:
 
