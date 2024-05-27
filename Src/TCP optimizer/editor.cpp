@@ -571,7 +571,14 @@ std::pair<std::string, std::string> TcpOptimizer::ChooseApplicationCLI() {
 
 //**Create custom QoS policy
 //**Pre: String QoS policy name, String path QoS effected aplication path, String Bandwidth throttle rate/amount
-void TcpOptimizer::createQoS(std::string QoS_Name, std::string path, std::string ThrottleRate) {
+void TcpOptimizer::createQoS(std::string QoS_Name, std::string path, std::string ThrottleRate, std::string ValueDSCP) {
+    QoS_Name.erase(QoS_Name.find("-LISTQoS"));
+    path.erase(path.find("-LISTQoS"));
+
+    //Check if QoS policy already in list
+    if (std::find(currentQOS.begin(), currentQOS.end(), QoS_Name) != currentQOS.end()) {
+        return;
+    }
     //Build commands to run
     std::list<std::string> commandList;
 
@@ -584,9 +591,9 @@ void TcpOptimizer::createQoS(std::string QoS_Name, std::string path, std::string
     commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"Remote Port\" /t REG_SZ /d " + "*");
     commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"Remote IP\" /t REG_SZ /d " + "*");
     commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"Remote IP Prefix Length\" /t REG_SZ /d " + "*");
-    commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"DSCP Value\" /t REG_SZ /d " + "-1");
+    commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"DSCP Value\" /t REG_SZ /d " + ValueDSCP);
     commandList.push_back("reg add HKCU\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + QoS_Name + " /v \"Throttle Rate\" /t REG_SZ /d " + ThrottleRate);
-    commandList.push_back("gpupdate /force");
+    //commandList.push_back("gpupdate /force");
 
     //Edit registry and add QoS
     for (const std::string& command : commandList) {
@@ -620,7 +627,6 @@ void TcpOptimizer::removeQoS(std::string QoS_Name) {
 }
 
 //**Remove custom QoS policy
-//**Pre: String QoS policty name
 void TcpOptimizer::clearQoS() {
     //Build commands to run
     std::string command = "reg delete HKEY_CURRENT_USER\\Software\\Policies\\Microsoft\\Windows\\QoS";
@@ -632,6 +638,52 @@ void TcpOptimizer::clearQoS() {
     ESC(GREEN);
     std::cout << "Succesfully cleard QoS policys" << std::endl;
     currentQOS.clear();
+}
+
+//**Remove custom QoS policy for non optimzed apps
+void TcpOptimizer::clearQoSNonOPtimized() {
+    //Build commands to run
+    std::string command = "reg query HKEY_CURRENT_USER\\Software\\Policies\\Microsoft\\Windows\\QoS";
+    std::string result = runCommand(command.c_str());
+    std::istringstream iss(result);
+    std::string line;
+    std::vector<std::string> policyNames;
+    std::vector<std::string> remainingPolicies;
+
+    //Extract policy names
+    while (std::getline(iss, line)) {
+        if (line.find("REG_SZ") != std::string::npos) {
+            size_t pos = line.find_last_of("\\");
+            if (pos != std::string::npos) {
+                std::string policyName = line.substr(pos + 1);
+                policyNames.push_back(policyName);
+            }
+        }
+    }
+
+    //Check policys and delete if not for optimized app
+    for (const auto& policy : policyNames) {
+        bool isOptimizedApp = false;
+        for (const auto& optimizedApp : optimizedApps) {
+            if (policy.find(optimizedApp.first) != std::string::npos) {
+                isOptimizedApp = true;
+                break;
+            }
+        }
+        if (!isOptimizedApp) {
+            std::string deleteCommand = "reg delete HKEY_CURRENT_USER\\Software\\Policies\\Microsoft\\Windows\\QoS\\" + policy;
+            system(deleteCommand.c_str());
+            remainingPolicies.push_back(policy);
+        }
+    }
+
+    //Update Group Policy
+    std::string gpupdateCommand = "gpupdate /force";
+    system(gpupdateCommand.c_str());
+
+    ESC(GREEN);
+    std::cout << "Successfully cleared QoS policies" << std::endl;
+    currentQOS = remainingPolicies;
 }
 
 //**Find an aplication path with its PID
@@ -752,35 +804,69 @@ bool TcpOptimizer::isInVector(const std::string& str, const std::vector<std::str
     auto it = std::find(vec.begin(), vec.end(), str);
     return it != vec.end();
 }
- 
+
+//Helper function to check if QoS policy exists
+bool TcpOptimizer::isQoSPolicyPresent(const std::string& appName) {
+    HKEY hKey;
+    if (RegOpenKeyEx(HKEY_CURRENT_USER, TEXT("HKEY_CURRENT_USER\\Software\\Policies\\Microsoft\\Windows\\QoS"), 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+        DWORD dataSize;
+        if (RegQueryValueEx(hKey, appName.c_str(), nullptr, nullptr, nullptr, &dataSize) == ERROR_SUCCESS) {
+            RegCloseKey(hKey);
+            return true;
+        }
+        RegCloseKey(hKey);
+    }
+    return false;
+}
+
 //**Apply bandwitdh throttle QoS to apps that are deemed to need it
 //-->FINISH THIS ie its ment to only optimize when an optimized app is in the top 10 apps using bandwitdh 
 //-->also make it remove optimizations after the app is no longer top 10
 void TcpOptimizer::manageBandwidthUsage() {
     //Grab list of apps and their usage
-    //                    PID  IDK??
     std::vector<std::pair<int, SIZE_T>> usage = GetBandwidthUsage();
-    bool flip = false;
-    int total = 0;
+
     if (optimizedApps.size() > 0) {
+        //Get top 5 apps
+        std::vector<int> topApps;
+        for (size_t i = 0; i < std::min(size_t(5), usage.size()); ++i) {
+            topApps.push_back(usage[i].first);
+        }
+
+        bool flip = false;
         for (const auto& pair : usage) {
+            std::string name = extractFileName(FindAppNameByPID(std::to_string(pair.first)) + "-LISTQoS");
+            flip = false;
+
+            //Check if this is an optimized app
             for (const auto& Opair : optimizedApps) {
-                //Check if this is a optimzed app
                 if (std::to_string(pair.first) == Opair.second) {
                     flip = true;
+                    createQoS(name, name, "-1", "60"); //MAYBE EDIT DSCP VALUE LATER TO SUM LIKE 46
+                    break;
                 }
-                total = total + static_cast<int>(pair.second);
             }
-            //if its not a optimzed app limit it
-            if (flip == false) {
-                std::string name = extractFileName(FindAppNameByPID(std::to_string(pair.first)) + "-LISTQoS");
-                if (!isInVector(name, currentQOS)) {
-                    ESC(YELLOW);
-                    std::cout << "Creating QoS policy for " << name;
-                    createQoS(name, name, "2");//MAYBE EDIT THROLLTE RATE LATER
+
+            //If not an optimized app, limit it if an optimized app is in the top 5
+            if (!flip) {
+                if (std::find(topApps.begin(), topApps.end(), pair.first) != topApps.end()) {
+                    if (!isInVector(name, currentQOS)) {
+                        ESC(YELLOW);
+                        createQoS(name, name, "5000", "8"); // MAYBE EDIT DSCP VALUE LATER
+                    }
+                }
+                else {
+                    //Check if QoS policies exist for non-optimized apps
+                    if (isQoSPolicyPresent(name)) {
+                        clearQoSNonOPtimized();
+                    }
                 }
             }
         }
+
+        // Update Group Policy
+        std::string command = "gpupdate /force";
+        runCommand(command.c_str());
     }
 }
 
@@ -936,6 +1022,15 @@ bool TcpOptimizer::autoTestValues() {
 
     //Set prioritys
     setProcessPriorityCLI();
+    
+    //Ask user if they are sure they want to start TCP optimization
+    ESC(WHITE);
+    std::string res;
+    std::cout << "Do you want to start TCP optimization? (Yes/No): ";
+    std::getline(std::cin, res);
+    if(res == "No" || res == "no" || res == "n") {
+        return true;
+    }
 
     std::map<std::string, std::list<std::string>> RegistryEditDict = {
     { "TCPWindowAutoTuning", {"disabled", "highlyrestricted", "restricted", "normal", "experimental"}},
@@ -950,143 +1045,142 @@ bool TcpOptimizer::autoTestValues() {
     };
 
     //Speed test vars
-    int highSpeed = speedTest();;
+    int lowSpeed = speedTest();;
     std::string bestSetting;
 
     //Loop eace
-    if (1 == 2) {
-        for (const auto& pair : RegistryEditDict) {
-            for (const auto& value : pair.second) {
-                if (pair.first == "TCPWindowAutoTuning") {
-                    //SET VALUE
-                    ESC(YELLOW);
-                    std::cout << "Running TCP-Window-Auto-Tuning with: " << value << std::endl;
+    for (const auto& pair : RegistryEditDict) {
+        for (const auto& value : pair.second) {
+            if (pair.first == "TCPWindowAutoTuning") {
+                //SET VALUE
+                ESC(YELLOW);
+                std::cout << "Running TCP-Window-Auto-Tuning with: " << value << std::endl;
 
-                    editTcpWindowAutoTuning(value);
-                    //run speed test
-                    int speed = speedTest();
-                    if (speed >= highSpeed) {
-                        highSpeed = speed;
-                        bestSetting = value;
-                    }
-                    editTcpWindowAutoTuning(bestSetting);
+                editTcpWindowAutoTuning(value);
+                //run speed test
+                int speed = speedTest();
+                if (speed <= lowSpeed) {
+                    lowSpeed = speed;
+                    bestSetting = value;
                 }
-                if (pair.first == "WindowsScalingHeuristics") {
-                    //SET VALUE
-                    ESC(YELLOW);
-                    std::cout << "Running WindowsScalingHeuristics with: " << value << std::endl;
-
-                    editWindowsScalingHeuristics(value);
-                    //run speed test
-                    int speed = speedTest();
-                    if (speed >= highSpeed) {
-                        highSpeed = speed;
-                        bestSetting = value;
-                    }
-                    editWindowsScalingHeuristics(bestSetting);
-                }
-                if (pair.first == "CongestionControlProvider") {
-
-                    //SET VALUE
-                    ESC(YELLOW);
-                    std::cout << "Running CongestionControlProvider with: " << value << std::endl;
-
-                    editCongestionControlProvider(value);
-                    //run speed test
-                    int speed = speedTest();
-                    if (speed >= highSpeed) {
-                        highSpeed = speed;
-                        bestSetting = value;
-                    }
-                    editCongestionControlProvider(bestSetting);
-                }
-                if (pair.first == "Receive-sideScaling") {
-
-                    //SET VALUE
-                    ESC(YELLOW);
-                    std::cout << "Running Receive-sideScaling with: " << value << std::endl;
-
-                    editReceiveSideScaling(value);
-                    //run speed test
-                    int speed = speedTest();
-                    if (speed >= highSpeed) {
-                        highSpeed = speed;
-                        bestSetting = value;
-                    }
-                    editReceiveSideScaling(bestSetting);
-                }
-                if (pair.first == "SegmentCoalescing") {
-
-                    //SET VALUE
-                    ESC(YELLOW);
-                    std::cout << "Running SegmentCoalescing with: " << value << std::endl;
-
-                    editSegmentCoalescing(value);
-                    //run speed test
-                    int speed = speedTest();
-                    if (speed >= highSpeed) {
-                        highSpeed = speed;
-                        bestSetting = value;
-                    }
-                    editSegmentCoalescing(bestSetting);
-                }
-                if (pair.first == "ECNcapability") {
-
-                    //SET VALUE
-                    ESC(YELLOW);
-                    std::cout << "Running ECNcapability with: " << value << std::endl;
-
-                    editEcnCapability(value);
-                    //run speed test
-                    int speed = speedTest();
-                    if (speed >= highSpeed) {
-                        highSpeed = speed;
-                        bestSetting = value;
-                    }
-                    editEcnCapability(bestSetting);
-                }
-                // if(pair.first == "ChecksumOffloading"){
-
-                //     //SET VALUE
-                //     std::cout << "Running ChecksumOffloading with: " << value << std::endl;
-                //     //run speed test
-                //     int speed = speedTest();
-                // if(speed >= highSpeed){
-                //         highSpeed = speed;
-                //         bestSetting = value;
-                //     }
-                // }
-                // if(pair.first == "TCPChimneyOffload"){
-
-                //     //SET VALUE
-                //     std::cout << "Running TCPChimneyOffload with: " << value << std::endl;
-                //     editTcpChimneyOffload(value);
-                //     //run speed test
-                //     int speed = speedTest();
-                //     if(speed >= highSpeed){
-                //             highSpeed = speed;
-                //             bestSetting = value;
-                //         }
-                // }
-                // if(pair.first == "LargeSendOffload"){
-
-                //     //SET VALUE
-                //     std::cout << "Running LargeSendOffload with: " << value << std::endl;
-                //     editLargeSendOffload(value);
-                //     //run speed test
-                //     int speed = speedTest();
-                //     if(speed >= highSpeed){
-                //         highSpeed = speed;
-                //         bestSetting = value;
-                //     }
-                // }
-                std::cout << "---------------------------------------------------------------------------------------" << "\n\n";
+                editTcpWindowAutoTuning(bestSetting);
             }
-            std::cout << "Best setting for " << pair.first << " is " << bestSetting << std::endl;
+            if (pair.first == "WindowsScalingHeuristics") {
+                //SET VALUE
+                ESC(YELLOW);
+                std::cout << "Running WindowsScalingHeuristics with: " << value << std::endl;
 
+                editWindowsScalingHeuristics(value);
+                //run speed test
+                int speed = speedTest();
+                if (speed >= lowSpeed) {
+                    lowSpeed = speed;
+                    bestSetting = value;
+                }
+                editWindowsScalingHeuristics(bestSetting);
+            }
+            if (pair.first == "CongestionControlProvider") {
+
+                //SET VALUE
+                ESC(YELLOW);
+                std::cout << "Running CongestionControlProvider with: " << value << std::endl;
+
+                editCongestionControlProvider(value);
+                //run speed test
+                int speed = speedTest();
+                if (speed >= lowSpeed) {
+                    lowSpeed = speed;
+                    bestSetting = value;
+                }
+                editCongestionControlProvider(bestSetting);
+            }
+            if (pair.first == "Receive-sideScaling") {
+
+                //SET VALUE
+                ESC(YELLOW);
+                std::cout << "Running Receive-sideScaling with: " << value << std::endl;
+
+                editReceiveSideScaling(value);
+                //run speed test
+                int speed = speedTest();
+                if (speed >= lowSpeed) {
+                    lowSpeed = speed;
+                    bestSetting = value;
+                }
+                editReceiveSideScaling(bestSetting);
+            }
+            if (pair.first == "SegmentCoalescing") {
+
+                //SET VALUE
+                ESC(YELLOW);
+                std::cout << "Running SegmentCoalescing with: " << value << std::endl;
+
+                editSegmentCoalescing(value);
+                //run speed test
+                int speed = speedTest();
+                if (speed >= lowSpeed) {
+                    lowSpeed = speed;
+                    bestSetting = value;
+                }
+                editSegmentCoalescing(bestSetting);
+            }
+            if (pair.first == "ECNcapability") {
+
+                //SET VALUE
+                ESC(YELLOW);
+                std::cout << "Running ECNcapability with: " << value << std::endl;
+
+                editEcnCapability(value);
+                //run speed test
+                int speed = speedTest();
+                if (speed >= lowSpeed) {
+                    lowSpeed = speed;
+                    bestSetting = value;
+                }
+                editEcnCapability(bestSetting);
+            }
+            // if(pair.first == "ChecksumOffloading"){
+
+            //     //SET VALUE
+            //     std::cout << "Running ChecksumOffloading with: " << value << std::endl;
+            //     //run speed test
+            //     int speed = speedTest();
+            // if(speed >= lowSpeed){
+            //         lowSpeed = speed;
+            //         bestSetting = value;
+            //     }
+            // }
+            // if(pair.first == "TCPChimneyOffload"){
+
+            //     //SET VALUE
+            //     std::cout << "Running TCPChimneyOffload with: " << value << std::endl;
+            //     editTcpChimneyOffload(value);
+            //     //run speed test
+            //     int speed = speedTest();
+            //     if(speed >= lowSpeed){
+            //             lowSpeed = speed;
+            //             bestSetting = value;
+            //         }
+            // }
+            // if(pair.first == "LargeSendOffload"){
+
+            //     //SET VALUE
+            //     std::cout << "Running LargeSendOffload with: " << value << std::endl;
+            //     editLargeSendOffload(value);
+            //     //run speed test
+            //     int speed = speedTest();
+            //     if(speed >= lowSpeed){
+            //         lowSpeed = speed;
+            //         bestSetting = value;
+            //     }
+            // }
+            std::cout << "---------------------------------------------------------------------------------------" << "\n\n";
         }
+        std::cout << "Best setting for " << pair.first << " is " << bestSetting << std::endl;
 
     }
+
+    
     ESC(GREEN);
     std::cout << "Auto value optimization complete!" << std::endl;
     ESC(RESET);

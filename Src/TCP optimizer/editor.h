@@ -34,13 +34,15 @@ public:
     void setProcessPriorityListCLI();
     std::vector<std::pair<std::string, std::string>> GetRunningApplications();
     std::pair<std::string, std::string> ChooseApplicationCLI();
-    void createQoS(std::string QoS_Name, std::string path, std::string ThrottleRate);
+    void createQoS(std::string QoS_Name, std::string path, std::string ThrottleRate, std::string ValueDSCP);
     void removeQoS(std::string QoS_Name);
     void clearQoS();
+    void clearQoSNonOPtimized();
     std::string FindAppNameByPID(const std::string& pidStr);
     std::vector<std::pair<int, SIZE_T>> GetBandwidthUsage();
     std::string extractFileName(const std::string& path);
     bool isInVector(const std::string& str, const std::vector<std::string>& vec);
+    bool isQoSPolicyPresent(const std::string& appName);
     void manageBandwidthUsage();
     bool loadBackUp();
     bool createBackUp();

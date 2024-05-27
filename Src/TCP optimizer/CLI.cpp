@@ -33,12 +33,12 @@
 using namespace std;
 
 //Run dynamic updates
-void dynamicUpdates(TcpOptimizer& optimizer) {
-    while (true) {
-        optimizer.manageBandwidthUsage();
-        std::this_thread::sleep_for(std::chrono::minutes(30));
-    }
-}
+//void dynamicUpdates(TcpOptimizer& optimizer) {
+//    while (true) {
+//        optimizer.manageBandwidthUsage();
+//        std::this_thread::sleep_for(std::chrono::minutes(30));
+//    }
+//}
 
 //Set console text color
 void SC(int color) {
@@ -72,9 +72,9 @@ int main() {
     //Optimizer instance
     TcpOptimizer optimizer;
     //Dynamic update thread
-    std::thread periodicThread(dynamicUpdates, std::ref(optimizer));
-    //Free console
-    FreeConsole();
+    //std::thread periodicThread(dynamicUpdates, std::ref(optimizer));
+    ////Free console
+    //FreeConsole();
     
     //Main loop
     while (true) {
