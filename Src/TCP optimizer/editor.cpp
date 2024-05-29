@@ -141,7 +141,7 @@ double TcpOptimizer::speedTest() {
     ESC(GREEN);
     std::cout << "SpeedTest done, (Speed upload+download) was: " << downloadSpeed + uploadSpeed << std::endl;
 
-    return downloadSpeed+uploadSpeed;
+    return downloadSpeed;// +uploadSpeed;
 }
 
 //****This is dependent on the speedtest CLI this should be changed later****
@@ -842,7 +842,7 @@ void TcpOptimizer::manageBandwidthUsage() {
             for (const auto& Opair : optimizedApps) {
                 if (std::to_string(pair.first) == Opair.second) {
                     flip = true;
-                    createQoS(name, name, "-1", "60"); //MAYBE EDIT DSCP VALUE LATER TO SUM LIKE 46
+                    createQoS(name, name, "999999999999999999", "60"); //MAYBE EDIT DSCP VALUE LATER TO SUM LIKE 46
                     break;
                 }
             }
@@ -852,7 +852,7 @@ void TcpOptimizer::manageBandwidthUsage() {
                 if (std::find(topApps.begin(), topApps.end(), pair.first) != topApps.end()) {
                     if (!isInVector(name, currentQOS)) {
                         ESC(YELLOW);
-                        createQoS(name, name, "5000", "8"); // MAYBE EDIT DSCP VALUE LATER
+                        createQoS(name, name, "76800", "8"); // MAYBE EDIT DSCP VALUE LATER
                     }
                 }
                 else {
@@ -1045,11 +1045,12 @@ bool TcpOptimizer::autoTestValues() {
     };
 
     //Speed test vars
-    int lowSpeed = speedTest();;
+    int highSpeed = speedTest();;
     std::string bestSetting;
 
     //Loop eace
     for (const auto& pair : RegistryEditDict) {
+        bestSetting = pair.second.front();
         for (const auto& value : pair.second) {
             if (pair.first == "TCPWindowAutoTuning") {
                 //SET VALUE
@@ -1059,8 +1060,8 @@ bool TcpOptimizer::autoTestValues() {
                 editTcpWindowAutoTuning(value);
                 //run speed test
                 int speed = speedTest();
-                if (speed <= lowSpeed) {
-                    lowSpeed = speed;
+                if (speed >= highSpeed) {
+                    highSpeed = speed;
                     bestSetting = value;
                 }
                 editTcpWindowAutoTuning(bestSetting);
@@ -1073,8 +1074,8 @@ bool TcpOptimizer::autoTestValues() {
                 editWindowsScalingHeuristics(value);
                 //run speed test
                 int speed = speedTest();
-                if (speed >= lowSpeed) {
-                    lowSpeed = speed;
+                if (speed <= highSpeed) {
+                    highSpeed = speed;
                     bestSetting = value;
                 }
                 editWindowsScalingHeuristics(bestSetting);
@@ -1088,8 +1089,8 @@ bool TcpOptimizer::autoTestValues() {
                 editCongestionControlProvider(value);
                 //run speed test
                 int speed = speedTest();
-                if (speed >= lowSpeed) {
-                    lowSpeed = speed;
+                if (speed <= highSpeed) {
+                    highSpeed = speed;
                     bestSetting = value;
                 }
                 editCongestionControlProvider(bestSetting);
@@ -1103,8 +1104,8 @@ bool TcpOptimizer::autoTestValues() {
                 editReceiveSideScaling(value);
                 //run speed test
                 int speed = speedTest();
-                if (speed >= lowSpeed) {
-                    lowSpeed = speed;
+                if (speed <= highSpeed) {
+                    highSpeed = speed;
                     bestSetting = value;
                 }
                 editReceiveSideScaling(bestSetting);
@@ -1118,8 +1119,8 @@ bool TcpOptimizer::autoTestValues() {
                 editSegmentCoalescing(value);
                 //run speed test
                 int speed = speedTest();
-                if (speed >= lowSpeed) {
-                    lowSpeed = speed;
+                if (speed <= highSpeed) {
+                    highSpeed = speed;
                     bestSetting = value;
                 }
                 editSegmentCoalescing(bestSetting);
@@ -1133,8 +1134,8 @@ bool TcpOptimizer::autoTestValues() {
                 editEcnCapability(value);
                 //run speed test
                 int speed = speedTest();
-                if (speed >= lowSpeed) {
-                    lowSpeed = speed;
+                if (speed <= highSpeed) {
+                    highSpeed = speed;
                     bestSetting = value;
                 }
                 editEcnCapability(bestSetting);
@@ -1145,8 +1146,8 @@ bool TcpOptimizer::autoTestValues() {
             //     std::cout << "Running ChecksumOffloading with: " << value << std::endl;
             //     //run speed test
             //     int speed = speedTest();
-            // if(speed >= lowSpeed){
-            //         lowSpeed = speed;
+            // if(speed >= highSpeed){
+            //         highSpeed = speed;
             //         bestSetting = value;
             //     }
             // }
@@ -1157,8 +1158,8 @@ bool TcpOptimizer::autoTestValues() {
             //     editTcpChimneyOffload(value);
             //     //run speed test
             //     int speed = speedTest();
-            //     if(speed >= lowSpeed){
-            //             lowSpeed = speed;
+            //     if(speed >= highSpeed){
+            //             highSpeed = speed;
             //             bestSetting = value;
             //         }
             // }
@@ -1169,8 +1170,8 @@ bool TcpOptimizer::autoTestValues() {
             //     editLargeSendOffload(value);
             //     //run speed test
             //     int speed = speedTest();
-            //     if(speed >= lowSpeed){
-            //         lowSpeed = speed;
+            //     if(speed >= highSpeed){
+            //         highSpeed = speed;
             //         bestSetting = value;
             //     }
             // }
