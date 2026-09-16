@@ -6,7 +6,7 @@
 
 WINSPAR is a command-line tool designed to optimize TCP settings and download speeds of applications on Windows systems for improved network performance. It provides features for tuning various TCP parameters, managing application bandwidth usage, and conducting network speed tests.
 
-This project was developed as a capstone project for 2023-2024, some of the features listed below may still in progress.
+This project was developed as a capstone project for the 2023-2024 school year, some of the features listed below may still in progress.
 
 ## Table of Contents
 
